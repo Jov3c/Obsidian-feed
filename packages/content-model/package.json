@@ -11,6 +11,10 @@
     "./schema": {
       "types": "./src/schema.ts",
       "import": "./src/schema.ts"
+    },
+    "./types": {
+      "types": "./src/article-document.ts",
+      "import": "./src/article-document.ts"
     }
   },
   "scripts": {

@@ -9,7 +9,8 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@obsidian-feed/contracts": "workspace:*"
+    "@obsidian-feed/contracts": "workspace:*",
+    "@obsidian-feed/content-model": "workspace:*"
   },
   "devDependencies": {
     "esbuild": "^0.28.2",

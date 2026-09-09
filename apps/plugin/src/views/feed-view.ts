@@ -5,6 +5,7 @@ import { AddSubscriptionModal } from "./add-subscription-modal.js";
 import { actionButton, element } from "./dom.js";
 import { renderSubscriptions } from "./subscriptions-view.js";
 import { renderToday, TodayController } from "./today-view.js";
+import { ReaderViewController } from "./reader-view.js";
 
 export const FEED_VIEW_TYPE = "obsidian-feed-main";
 export type FeedRoute =
@@ -15,6 +16,7 @@ export type FeedRoute =
 export class FeedView extends ItemView {
   private route: FeedRoute = { name: "today" };
   private readonly today: TodayController;
+  private readonly reader: ReaderViewController;
 
   constructor(
     leaf: WorkspaceLeaf,
@@ -25,6 +27,7 @@ export class FeedView extends ItemView {
       (cursor) => this.plugin.api.listArticles({ limit: 30, ...(cursor ? { cursor } : {}) }),
       () => this.render(),
     );
+    this.reader = new ReaderViewController(plugin);
   }
 
   getViewType(): string {
@@ -107,15 +110,16 @@ export class FeedView extends ItemView {
       this.prependNavigation();
     } else if (this.route.name === "reader") {
       const back = this.route.from;
-      this.contentEl.append(
-        actionButton(
-          document,
-          "返回",
-          () => void (back === "today" ? this.showToday() : this.showSubscriptions()),
-        ),
-        element(document, "p", "of-state", "正在准备阅读器…"),
+      void this.reader.render(
+        this.contentEl,
+        this.route.articleId,
+        () => void (back === "today" ? this.showToday() : this.showSubscriptions()),
       );
     }
+  }
+
+  async onClose(): Promise<void> {
+    this.reader.dispose();
   }
 
   private prependNavigation(): void {
