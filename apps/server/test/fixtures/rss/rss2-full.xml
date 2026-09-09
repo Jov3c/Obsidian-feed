@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Example RSS</title>
+    <link>https://example.com/</link>
+    <description>Example feed</description>
+    <item>
+      <guid>post-1</guid>
+      <title>First post</title>
+      <link>/posts/first</link>
+      <author>Ada</author>
+      <pubDate>Wed, 09 Sep 2026 03:22:11 GMT</pubDate>
+      <content:encoded><![CDATA[<p>Complete article body.</p>]]></content:encoded>
+    </item>
+    <item>
+      <guid>post-1</guid>
+      <title>Duplicate post</title>
+      <link>/posts/duplicate</link>
+    </item>
+  </channel>
+</rss>

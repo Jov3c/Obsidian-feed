@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Example Atom</title>
+  <link rel="self" href="/atom.xml" />
+  <link rel="alternate" href="https://atom.example/" />
+  <entry>
+    <id>tag:atom.example,2026:one</id>
+    <title>Atom entry</title>
+    <link rel="alternate" href="/posts/one" />
+    <author><name>Grace</name></author>
+    <updated>2026-09-09T03:22:11Z</updated>
+    <content type="html">&lt;p&gt;Atom full body.&lt;/p&gt;</content>
+  </entry>
+</feed>

