@@ -1,4 +1,4 @@
-import { articleDocumentSchema } from "@obsidian-feed/content-model";
+import { articleDocumentSchema } from "@obsidian-feed/content-model/schema";
 import { z } from "zod";
 
 import { sourceSummarySchema } from "./source.js";

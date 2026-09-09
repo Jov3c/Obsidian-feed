@@ -1,0 +1,9 @@
+{
+  "id": "obsidian-feed",
+  "name": "Obsidian Feed",
+  "version": "0.1.0",
+  "minAppVersion": "1.13.0",
+  "description": "A reading-first RSS and WeChat article reader for Obsidian.",
+  "author": "Jov3",
+  "isDesktopOnly": false
+}

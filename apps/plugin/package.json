@@ -4,8 +4,15 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "node -e \"\"",
+    "build": "node esbuild.config.mjs",
     "test": "vitest run --passWithNoTests",
-    "typecheck": "node -e \"\""
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@obsidian-feed/contracts": "workspace:*"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "obsidian": "^1.13.1"
   }
 }
