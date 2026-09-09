@@ -126,6 +126,32 @@
   justify-content: space-between;
   padding: 6px 0;
   background: var(--background-primary);
+  transition:
+    transform 190ms ease,
+    opacity 190ms ease;
+}
+
+.of-reader-progress {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  height: 2px;
+  background: var(--interactive-accent);
+  opacity: 0;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: opacity 180ms ease;
+}
+.of-reader-progress.is-visible {
+  opacity: 0.75;
+}
+.of-reader-toolbar.is-hidden {
+  opacity: 0;
+  transform: translateY(-110%);
+  pointer-events: none;
+}
+.of-reader-toolbar.reduce-motion {
+  transition: none;
 }
 
 .of-reader-title {

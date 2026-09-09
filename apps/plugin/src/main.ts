@@ -3,14 +3,17 @@ import { Notice, Plugin, requestUrl } from "obsidian";
 import { FeedApiClient } from "./api/client.js";
 import { ObsidianFeedSettingsTab } from "./settings/settings-tab.js";
 import { migratePluginData, type PluginDataV1, type PluginSettings } from "./state/plugin-data.js";
+import { ReadingStateStore } from "./state/reading-state.js";
 import { FeedView, FEED_VIEW_TYPE } from "./views/feed-view.js";
 
 export default class ObsidianFeedPlugin extends Plugin {
   data!: PluginDataV1;
   api!: FeedApiClient;
+  readingState!: ReadingStateStore;
 
   async onload(): Promise<void> {
     this.data = migratePluginData(await this.loadData());
+    this.readingState = new ReadingStateStore(this.data, () => this.savePluginData());
     this.rebuildClient();
     this.registerView(FEED_VIEW_TYPE, (leaf) => new FeedView(leaf, this));
     this.addSettingTab(new ObsidianFeedSettingsTab(this.app, this));
@@ -30,6 +33,10 @@ export default class ObsidianFeedPlugin extends Plugin {
       name: "Refresh current feed list",
       callback: () => void this.withFeedView((view) => view.refresh()),
     });
+  }
+
+  async onunload(): Promise<void> {
+    await this.readingState.flush();
   }
 
   async updateSettings(patch: Partial<PluginSettings>): Promise<void> {
