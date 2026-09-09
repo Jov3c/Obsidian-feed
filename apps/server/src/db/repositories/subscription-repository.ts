@@ -46,4 +46,9 @@ export class SubscriptionRepository {
       .where(eq(subscriptions.enabled, true))
       .all();
   }
+
+  async list(includeDisabled: boolean): Promise<SubscriptionRow[]> {
+    if (!includeDisabled) return this.listEnabled();
+    return this.database.orm.select().from(subscriptions).orderBy(subscriptions.createdAt).all();
+  }
 }

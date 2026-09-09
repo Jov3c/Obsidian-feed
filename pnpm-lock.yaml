@@ -36,6 +36,9 @@ importers:
 
   apps/server:
     dependencies:
+      "@obsidian-feed/contracts":
+        specifier: workspace:*
+        version: link:../../packages/contracts
       drizzle-orm:
         specifier: 1.0.0-rc.4
         version: 1.0.0-rc.4(zod@4.5.4)
