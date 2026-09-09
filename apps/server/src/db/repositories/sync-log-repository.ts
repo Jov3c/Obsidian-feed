@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 
 import { newId, type Database } from "../client.js";
 import { syncLogs } from "../schema.js";
@@ -10,6 +10,16 @@ export class SyncLogRepository {
     private readonly database: Database,
     private readonly now: () => Date = () => new Date(),
   ) {}
+
+  async latestForSource(sourceId: string): Promise<SyncLogRow | undefined> {
+    return this.database.orm
+      .select()
+      .from(syncLogs)
+      .where(eq(syncLogs.sourceId, sourceId))
+      .orderBy(desc(syncLogs.startedAt))
+      .limit(1)
+      .get();
+  }
 
   async start(sourceId: string | null, providerKey: string): Promise<SyncLogRow> {
     const timestamp = this.now().toISOString();

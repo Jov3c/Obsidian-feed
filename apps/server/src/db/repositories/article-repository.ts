@@ -152,15 +152,22 @@ export class ArticleRepository {
   async listPage(input: {
     limit: number;
     sourceId?: string;
+    before?: { publishedAtFallback: string; id: string };
   }): Promise<{ items: ArticleRow[]; nextCursor: null }> {
+    const dateOrder = sql`coalesce(${articles.publishedAt}, ${articles.fetchedAt})`;
+    const conditions = [
+      ...(input.sourceId ? [eq(articles.sourceId, input.sourceId)] : []),
+      ...(input.before
+        ? [
+            sql`(${dateOrder} < ${input.before.publishedAtFallback} OR (${dateOrder} = ${input.before.publishedAtFallback} AND ${articles.id} < ${input.before.id}))`,
+          ]
+        : []),
+    ];
     const query = this.database.orm
       .select()
       .from(articles)
-      .where(input.sourceId ? eq(articles.sourceId, input.sourceId) : undefined)
-      .orderBy(
-        desc(sql`coalesce(${articles.publishedAt}, ${articles.fetchedAt})`),
-        desc(articles.id),
-      )
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .orderBy(desc(dateOrder), desc(articles.id))
       .limit(input.limit);
     return { items: query.all(), nextCursor: null };
   }
