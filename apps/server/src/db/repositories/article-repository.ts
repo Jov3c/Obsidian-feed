@@ -35,7 +35,11 @@ export class ArticleRepository {
     private readonly now: () => Date = () => new Date(),
   ) {}
 
-  async upsertMeta(input: UpsertArticleMetaInput): Promise<ArticleRow> {
+  async findByIdentity(input: {
+    sourceId: string;
+    externalId: string | null;
+    canonicalUrl: string;
+  }): Promise<ArticleRow | undefined> {
     const byExternal = input.externalId
       ? this.database.orm
           .select()
@@ -45,7 +49,7 @@ export class ArticleRepository {
           )
           .get()
       : undefined;
-    const existing =
+    return (
       byExternal ??
       this.database.orm
         .select()
@@ -53,7 +57,12 @@ export class ArticleRepository {
         .where(
           and(eq(articles.sourceId, input.sourceId), eq(articles.canonicalUrl, input.canonicalUrl)),
         )
-        .get();
+        .get()
+    );
+  }
+
+  async upsertMeta(input: UpsertArticleMetaInput): Promise<ArticleRow> {
+    const existing = await this.findByIdentity(input);
     const timestamp = this.now().toISOString();
 
     if (existing) {
