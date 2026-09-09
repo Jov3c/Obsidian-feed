@@ -78,7 +78,7 @@
 expect(doc.title).toBe("...");
 expect(allText(doc)).toContain("正文关键句");
 expect(allText(doc)).not.toContain("长按识别二维码");
-expect(doc.blocks.filter(b => b.type === "image")).toHaveLength(3);
+expect(doc.blocks.filter((b) => b.type === "image")).toHaveLength(3);
 expect(result.confidence).toBeGreaterThan(0.8);
 ```
 
@@ -194,15 +194,15 @@ CI 不依赖真实微信账号。
 
 ## 12. Manual mobile acceptance matrix
 
-| 场景 | iPhone | iPad | Android |
-|---|---|---|---|
-| 打开 Today | 必测 | 必测 | 至少一次 |
-| 阅读长文 10min | 必测 | 必测 | 至少一次 |
-| 顶栏隐藏/恢复 | 必测 | 必测 | 必测 |
-| 退出再进入恢复位置 | 必测 | 必测 | 必测 |
-| 图片大图 | 必测 | 必测 | 必测 |
-| 保存文章+图片 | 必测 | 必测 | 必测 |
-| 摘录 | 必测 | 必测 | 必测 |
+| 场景               | iPhone | iPad | Android  |
+| ------------------ | ------ | ---- | -------- |
+| 打开 Today         | 必测   | 必测 | 至少一次 |
+| 阅读长文 10min     | 必测   | 必测 | 至少一次 |
+| 顶栏隐藏/恢复      | 必测   | 必测 | 必测     |
+| 退出再进入恢复位置 | 必测   | 必测 | 必测     |
+| 图片大图           | 必测   | 必测 | 必测     |
+| 保存文章+图片      | 必测   | 必测 | 必测     |
+| 摘录               | 必测   | 必测 | 必测     |
 
 ## 13. CI gates
 

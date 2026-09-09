@@ -19,13 +19,13 @@ JSON structured log：
 
 ```json
 {
-  "level":"info",
-  "event":"source_sync_finished",
-  "sourceId":"src_xxx",
-  "provider":"wechat-werss",
-  "durationMs":1204,
-  "newArticles":2,
-  "requestId":"..."
+  "level": "info",
+  "event": "source_sync_finished",
+  "sourceId": "src_xxx",
+  "provider": "wechat-werss",
+  "durationMs": 1204,
+  "newArticles": 2,
+  "requestId": "..."
 }
 ```
 

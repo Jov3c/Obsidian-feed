@@ -53,7 +53,7 @@ shared models ← both sides
 不要：
 
 ```ts
-throw new Error("failed")
+throw new Error("failed");
 ```
 
 如果用户/策略依赖错误类型。

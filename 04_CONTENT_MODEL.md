@@ -9,12 +9,7 @@ RSS 与微信公众号最终必须转成同一套模型。UI、Markdown 导出�
 ```ts
 export type SourceType = "rss" | "wechat";
 export type SourceStatus =
-  | "active"
-  | "rate_limited"
-  | "needs_auth"
-  | "parse_error"
-  | "unavailable"
-  | "disabled";
+  "active" | "rate_limited" | "needs_auth" | "parse_error" | "unavailable" | "disabled";
 
 export interface Source {
   id: string;
@@ -35,12 +30,7 @@ export interface Source {
 ## 3. Article metadata
 
 ```ts
-export type ContentStatus =
-  | "pending"
-  | "ready"
-  | "partial"
-  | "unavailable"
-  | "failed";
+export type ContentStatus = "pending" | "ready" | "partial" | "unavailable" | "failed";
 
 export interface ArticleMeta {
   id: string;

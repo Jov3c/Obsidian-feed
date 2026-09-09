@@ -200,14 +200,14 @@ Feed Server：
 
 ## 10. 状态映射
 
-| WeRSS/网络现象 | SourceStatus | API code |
-|---|---|---|
-| 正常 | active | - |
-| 401/授权失效 | needs_auth | WECHAT_AUTH_REQUIRED |
-| 429/明确频率限制 | rate_limited | WECHAT_RATE_LIMITED |
-| 上游 5xx | unavailable | WECHAT_UPSTREAM_UNAVAILABLE |
-| 正文 URL 失效 | active | ARTICLE_CONTENT_UNAVAILABLE（文章级） |
-| parser 失败 | parse_error（连续失败阈值后） | ARTICLE_PARSE_FAILED |
+| WeRSS/网络现象   | SourceStatus                  | API code                              |
+| ---------------- | ----------------------------- | ------------------------------------- |
+| 正常             | active                        | -                                     |
+| 401/授权失效     | needs_auth                    | WECHAT_AUTH_REQUIRED                  |
+| 429/明确频率限制 | rate_limited                  | WECHAT_RATE_LIMITED                   |
+| 上游 5xx         | unavailable                   | WECHAT_UPSTREAM_UNAVAILABLE           |
+| 正文 URL 失效    | active                        | ARTICLE_CONTENT_UNAVAILABLE（文章级） |
+| parser 失败      | parse_error（连续失败阈值后） | ARTICLE_PARSE_FAILED                  |
 
 ## 11. 风控策略
 

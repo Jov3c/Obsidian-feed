@@ -207,7 +207,7 @@ V1 仅提供：
 interface ReadingState {
   articleId: string;
   read: boolean;
-  progress: number;      // 0..1
+  progress: number; // 0..1
   scrollAnchor?: string; // 可选 block id
   updatedAt: string;
 }

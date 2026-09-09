@@ -69,6 +69,7 @@ obsidian-feed/
 ### Task 1: Bootstrap monorepo and quality gates
 
 **Files:**
+
 - Create: `package.json`
 - Create: `pnpm-workspace.yaml`
 - Create: `tsconfig.base.json`
@@ -81,6 +82,7 @@ obsidian-feed/
 - Create: `packages/content-model/package.json`
 
 **Interfaces:**
+
 - Produces root scripts: `build`, `test`, `typecheck`, `lint`, `format:check`.
 - Produces workspace package names: `@obsidian-feed/server`, `@obsidian-feed/plugin`, `@obsidian-feed/contracts`, `@obsidian-feed/content-model`.
 
@@ -155,6 +157,7 @@ git commit -m "chore: bootstrap obsidian feed monorepo"
 ### Task 2: Implement ArticleDocument and shared contracts
 
 **Files:**
+
 - Create: `packages/content-model/src/article-document.ts`
 - Create: `packages/content-model/src/schema.ts`
 - Create: `packages/content-model/src/normalize.ts`
@@ -169,6 +172,7 @@ git commit -m "chore: bootstrap obsidian feed monorepo"
 - Create: `packages/contracts/src/index.ts`
 
 **Interfaces:**
+
 - Produces: `ArticleDocument`, `ArticleBlock`, `articleDocumentSchema`, `normalizeArticleDocument(input)`, `hashArticleDocument(doc)`.
 - Produces API DTO Zod schemas matching `schemas/openapi.yaml`.
 
@@ -178,13 +182,15 @@ Test valid document and malicious/invalid variants:
 
 ```ts
 it("rejects arbitrary html blocks", () => {
-  expect(() => articleDocumentSchema.parse({
-    version: 1,
-    title: "x",
-    sourceName: "s",
-    canonicalUrl: "https://example.com/a",
-    blocks: [{ id: "b1", type: "html", html: "<script>x</script>" }]
-  })).toThrow();
+  expect(() =>
+    articleDocumentSchema.parse({
+      version: 1,
+      title: "x",
+      sourceName: "s",
+      canonicalUrl: "https://example.com/a",
+      blocks: [{ id: "b1", type: "html", html: "<script>x</script>" }],
+    }),
+  ).toThrow();
 });
 ```
 
@@ -237,6 +243,7 @@ git add packages
 ### Task 3: Add server config, SQLite schema, migrations, repositories
 
 **Files:**
+
 - Create: `apps/server/src/config.ts`
 - Create: `apps/server/src/db/client.ts`
 - Create: `apps/server/src/db/schema.ts`
@@ -250,6 +257,7 @@ git add packages
 - Create: `apps/server/test/db/schema.test.ts`
 
 **Interfaces:**
+
 - Produces `AppConfig`, `Database`, repositories with typed methods.
 - DB tables exactly match `schemas/sqlite.sql`.
 
@@ -320,6 +328,7 @@ git add apps/server
 ### Task 4: Build Fastify app, auth, error model, health endpoints
 
 **Files:**
+
 - Create: `apps/server/src/app.ts`
 - Create: `apps/server/src/main.ts`
 - Create: `apps/server/src/http/auth.ts`
@@ -330,6 +339,7 @@ git add apps/server
 - Create: `apps/server/test/http/auth.test.ts`
 
 **Interfaces:**
+
 - Produces `buildApp(deps)` for tests and `startServer()` for runtime.
 - Produces `AppError` and standard error serializer.
 
@@ -380,6 +390,7 @@ pnpm --filter @obsidian-feed/server test -- http
 ### Task 5: Implement SSRF-safe external HTTP client
 
 **Files:**
+
 - Create: `apps/server/src/http/safe-url.ts`
 - Create: `apps/server/src/http/safe-http-client.ts`
 - Create: `apps/server/src/http/trusted-upstream-client.ts`
@@ -387,6 +398,7 @@ pnpm --filter @obsidian-feed/server test -- http
 - Create: `apps/server/test/http/safe-http-client.test.ts`
 
 **Interfaces:**
+
 - Produces `SafeExternalHttpClient.getText(url, limits)` and `.getStream(url, limits)`.
 - Produces `TrustedUpstreamClient` bound to one configured base URL.
 
@@ -424,6 +436,7 @@ pnpm --filter @obsidian-feed/server test -- security http/safe-http-client.test.
 ### Task 6: Implement native RSS/Atom provider
 
 **Files:**
+
 - Create: `apps/server/src/providers/types.ts`
 - Create: `apps/server/src/providers/registry.ts`
 - Create: `apps/server/src/providers/rss/rss-provider.ts`
@@ -433,6 +446,7 @@ pnpm --filter @obsidian-feed/server test -- security http/safe-http-client.test.
 - Create fixtures under: `apps/server/test/fixtures/rss/`
 
 **Interfaces:**
+
 - Produces `ContentProvider` and `ProviderRegistry`.
 - `RssProvider.key = "rss-native"`.
 
@@ -470,6 +484,7 @@ pnpm --filter @obsidian-feed/server test -- providers/rss-provider.test.ts
 ### Task 7: Implement provider resolution tokens and subscription API
 
 **Files:**
+
 - Create: `apps/server/src/services/subscription-service.ts`
 - Create: `apps/server/src/security/resolution-token.ts`
 - Create: `apps/server/src/http/routes/subscriptions.ts`
@@ -477,6 +492,7 @@ pnpm --filter @obsidian-feed/server test -- providers/rss-provider.test.ts
 - Create: `apps/server/test/http/subscriptions.test.ts`
 
 **Interfaces:**
+
 - Produces `resolveSubscription(rawInput)` and `createSubscription(resolutionToken)`.
 
 - [ ] **Step 1: Write failing tests**
@@ -510,6 +526,7 @@ pnpm --filter @obsidian-feed/server test -- subscription
 ### Task 8: Implement WeRSS adapter and WeChat provider
 
 **Files:**
+
 - Create: `apps/server/src/providers/wechat/wechat-adapter.ts`
 - Create: `apps/server/src/providers/wechat/wechat-provider.ts`
 - Create: `apps/server/src/providers/wechat/werss-schemas.ts`
@@ -518,6 +535,7 @@ pnpm --filter @obsidian-feed/server test -- subscription
 - Create: `apps/server/test/providers/wechat-provider.test.ts`
 
 **Interfaces:**
+
 - `WeRssAdapter.resolveByArticleUrl(url)`
 - `WeRssAdapter.ensureSubscribed(candidate)`
 - `WeRssAdapter.listArticles(source, options)`
@@ -570,6 +588,7 @@ pnpm --filter @obsidian-feed/server test -- werss wechat-provider
 ### Task 9: Implement deterministic parsing core and WeChat parser
 
 **Files:**
+
 - Create: `apps/server/src/parsing/pipeline.ts`
 - Create: `apps/server/src/parsing/dom.ts`
 - Create: `apps/server/src/parsing/inline.ts`
@@ -585,6 +604,7 @@ pnpm --filter @obsidian-feed/server test -- werss wechat-provider
 - Create: `apps/server/test/parsing/xss.test.ts`
 
 **Interfaces:**
+
 - Produces:
 
 ```ts
@@ -639,6 +659,7 @@ pnpm --filter @obsidian-feed/server test -- parsing
 ### Task 10: Implement article ingestion and content fetching
 
 **Files:**
+
 - Create: `apps/server/src/services/ingest-service.ts`
 - Create: `apps/server/src/services/article-content-service.ts`
 - Create: `apps/server/src/providers/wechat/direct-content-fetcher.ts`
@@ -647,6 +668,7 @@ pnpm --filter @obsidian-feed/server test -- parsing
 - Create: `apps/server/test/providers/wechat-content-fetcher.test.ts`
 
 **Interfaces:**
+
 - Produces `ingestProviderArticles(source, articles)`.
 - Produces `ensureArticleContent(articleId)`.
 
@@ -682,6 +704,7 @@ pnpm --filter @obsidian-feed/server test -- ingest wechat-content
 ### Task 11: Implement media cache and proxy
 
 **Files:**
+
 - Create: `apps/server/src/media/media-service.ts`
 - Create: `apps/server/src/media/media-path.ts`
 - Create: `apps/server/src/media/mime.ts`
@@ -690,6 +713,7 @@ pnpm --filter @obsidian-feed/server test -- ingest wechat-content
 - Create: `apps/server/test/http/media.test.ts`
 
 **Interfaces:**
+
 - `registerRemote(url): Promise<MediaRef>`
 - `getOrFetch(id): Promise<MediaFile>`
 
@@ -730,6 +754,7 @@ pnpm --filter @obsidian-feed/server test -- media
 ### Task 12: Implement scheduler, adaptive policy, sync logs
 
 **Files:**
+
 - Create: `apps/server/src/sync/policy.ts`
 - Create: `apps/server/src/sync/worker.ts`
 - Create: `apps/server/src/sync/scheduler.ts`
@@ -738,6 +763,7 @@ pnpm --filter @obsidian-feed/server test -- media
 - Create: `apps/server/test/sync/worker.test.ts`
 
 **Interfaces:**
+
 - `computeNextSync(input): Date`
 - `syncOneSource(sourceId): Promise<SyncOutcome>`
 - `Scheduler.start()/stop()`.
@@ -774,6 +800,7 @@ pnpm --filter @obsidian-feed/server test -- sync
 ### Task 13: Implement article/source APIs and cursor pagination
 
 **Files:**
+
 - Create: `apps/server/src/security/cursor.ts`
 - Create: `apps/server/src/http/routes/articles.ts`
 - Create: `apps/server/src/http/routes/sources.ts`
@@ -782,6 +809,7 @@ pnpm --filter @obsidian-feed/server test -- sync
 - Create: `apps/server/test/http/sources.test.ts`
 
 **Interfaces:**
+
 - Matches `schemas/openapi.yaml`.
 
 - [ ] **Step 1: Write route tests**
@@ -810,6 +838,7 @@ pnpm --filter @obsidian-feed/server test -- http/articles http/sources
 ### Task 14: Bootstrap Obsidian plugin, settings, local state, API client
 
 **Files:**
+
 - Create: `apps/plugin/manifest.json`
 - Create: `apps/plugin/esbuild.config.mjs`
 - Create: `apps/plugin/src/main.ts`
@@ -821,6 +850,7 @@ pnpm --filter @obsidian-feed/server test -- http/articles http/sources
 - Create: `apps/plugin/test/api/client.test.ts`
 
 **Interfaces:**
+
 - Produces `FeedApiClient`, `PluginDataV1`, settings tab.
 
 - [ ] **Step 1: Write plugin-data migration/default tests**
@@ -858,6 +888,7 @@ git add apps/plugin
 ### Task 15: Implement Today and Subscriptions views
 
 **Files:**
+
 - Create: `apps/plugin/src/views/feed-view.ts`
 - Create: `apps/plugin/src/views/today-view.ts`
 - Create: `apps/plugin/src/views/subscriptions-view.ts`
@@ -867,6 +898,7 @@ git add apps/plugin
 - Create: `apps/plugin/test/views/subscriptions-view.test.ts`
 
 **Interfaces:**
+
 - Main route state from `10_OBSIDIAN_PLUGIN.md`.
 
 - [ ] **Step 1: Write DOM tests**
@@ -897,6 +929,7 @@ pnpm --filter @obsidian-feed/plugin test -- views
 ### Task 16: Implement Reader renderer and authenticated media loading
 
 **Files:**
+
 - Create: `apps/plugin/src/reader/renderer.ts`
 - Create: `apps/plugin/src/reader/media-loader.ts`
 - Create: `apps/plugin/src/reader/image-viewer.ts`
@@ -905,6 +938,7 @@ pnpm --filter @obsidian-feed/plugin test -- views
 - Create: `apps/plugin/test/reader/media-loader.test.ts`
 
 **Interfaces:**
+
 - `ArticleRenderer.renderDocument(container, doc, deps)`.
 - `AuthenticatedMediaLoader.load(mediaPath): Promise<string>` returns object URL and exposes dispose.
 
@@ -938,6 +972,7 @@ pnpm --filter @obsidian-feed/plugin test -- reader
 ### Task 17: Implement reading progress, read state, toolbar behavior
 
 **Files:**
+
 - Create: `apps/plugin/src/state/reading-state.ts`
 - Create: `apps/plugin/src/reader/scroll-state.ts`
 - Create: `apps/plugin/src/reader/toolbar-controller.ts`
@@ -945,6 +980,7 @@ pnpm --filter @obsidian-feed/plugin test -- reader
 - Modify: `apps/plugin/src/views/reader-view.ts`
 
 **Interfaces:**
+
 - `ReadingStateStore.update(articleId, patch)`.
 - `captureScrollPosition(container): ReadingPosition`.
 - `restoreScrollPosition(container, state): Promise<void>`.
@@ -977,6 +1013,7 @@ pnpm --filter @obsidian-feed/plugin test -- scroll-state
 ### Task 18: Implement Markdown conversion and note-preserving export
 
 **Files:**
+
 - Create: `apps/plugin/src/vault/markdown.ts`
 - Create: `apps/plugin/src/vault/frontmatter.ts`
 - Create: `apps/plugin/src/vault/path.ts`
@@ -986,6 +1023,7 @@ pnpm --filter @obsidian-feed/plugin test -- scroll-state
 - Create golden files under: `apps/plugin/test/fixtures/markdown/`
 
 **Interfaces:**
+
 - `articleDocumentToMarkdown(doc, options)`.
 - `ArticleExporter.save(detail): Promise<TFile>`.
 
@@ -1017,6 +1055,7 @@ pnpm --filter @obsidian-feed/plugin test -- vault
 ### Task 19: Implement Vault image localization and excerpts
 
 **Files:**
+
 - Create: `apps/plugin/src/vault/media-downloader.ts`
 - Create: `apps/plugin/src/reader/selection.ts`
 - Modify: `apps/plugin/src/vault/exporter.ts`
@@ -1025,6 +1064,7 @@ pnpm --filter @obsidian-feed/plugin test -- vault
 - Create: `apps/plugin/test/reader/selection.test.ts`
 
 **Interfaces:**
+
 - `localizeArticleImages(detail, notePath)`.
 - `appendExcerpt(articleId, selectedText)`.
 
@@ -1056,11 +1096,13 @@ pnpm --filter @obsidian-feed/plugin test -- media-downloader selection
 ### Task 20: Apply reading-first CSS, responsive/mobile accessibility
 
 **Files:**
+
 - Create/Modify: `apps/plugin/styles.css`
 - Create: `apps/plugin/test/styles/static-rules.test.ts`
 - Modify relevant view modules for ARIA/keyboard behavior.
 
 **Interfaces:**
+
 - CSS variables exactly map settings: 16/17/19px, 1.65/1.8/1.95, 640/720/820px.
 
 - [ ] **Step 1: Add static CSS test/check**
@@ -1091,6 +1133,7 @@ git add apps/plugin
 ### Task 21: Docker, Compose, backup CLI and operational status
 
 **Files:**
+
 - Create: `apps/server/Dockerfile`
 - Create: `docker-compose.yml`
 - Create: `.env.example`
@@ -1100,6 +1143,7 @@ git add apps/plugin
 - Create: `apps/server/test/cli/backup.test.ts`
 
 **Interfaces:**
+
 - `pnpm --filter @obsidian-feed/server db:backup`
 - `GET /v1/system/status`.
 
@@ -1138,6 +1182,7 @@ git add .
 ### Task 22: End-to-end integration and release gates
 
 **Files:**
+
 - Create: `apps/server/test/e2e/rss-flow.test.ts`
 - Create: `apps/server/test/e2e/wechat-adapter-flow.test.ts`
 - Create: `apps/plugin/test/e2e/reader-flow.test.ts` (mocked API / DOM)
@@ -1146,6 +1191,7 @@ git add .
 - Create: `LICENSE` (MIT if owner accepts recommendation)
 
 **Interfaces:**
+
 - Demonstrates full source→article→document→plugin rendering→Markdown conversion chain in tests without real external accounts.
 
 - [ ] **Step 1: RSS E2E**

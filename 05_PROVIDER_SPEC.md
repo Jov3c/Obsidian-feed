@@ -108,7 +108,10 @@ export interface WeChatAdapter {
   health(): Promise<AdapterHealth>;
   resolveByArticleUrl(url: string): Promise<WechatSourceCandidate>;
   ensureSubscribed(candidate: WechatSourceCandidate): Promise<WechatUpstreamSource>;
-  listArticles(source: WechatUpstreamSource, options: ListOptions): Promise<WechatUpstreamArticle[]>;
+  listArticles(
+    source: WechatUpstreamSource,
+    options: ListOptions,
+  ): Promise<WechatUpstreamArticle[]>;
   fetchContent(article: WechatUpstreamArticle): Promise<RawArticleContent>;
   requestRefresh?(source: WechatUpstreamSource): Promise<void>;
 }
