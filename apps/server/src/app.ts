@@ -26,6 +26,7 @@ export interface BuildAppDependencies {
   getWechatHealth(): Promise<WechatHealth> | WechatHealth;
   subscriptionService?: SubscriptionRouteService;
   mediaService?: MediaRouteService;
+  scheduler?: { start(): void; stop(): void };
   logger?: boolean | FastifyBaseLogger;
 }
 
@@ -42,6 +43,10 @@ export function buildApp(dependencies: BuildAppDependencies): FastifyInstance {
     dependencies.subscriptionService ?? createDefaultSubscriptionService(dependencies);
   registerSubscriptionRoutes(app, subscriptionService);
   if (dependencies.mediaService) registerMediaRoutes(app, dependencies.mediaService);
+  if (dependencies.scheduler) {
+    app.addHook("onReady", () => dependencies.scheduler?.start());
+    app.addHook("onClose", () => dependencies.scheduler?.stop());
+  }
 
   return app;
 }
