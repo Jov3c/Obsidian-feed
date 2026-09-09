@@ -67,6 +67,26 @@ describe("SQLite schema", () => {
     await expect(sources.create(input)).rejects.toThrow();
   });
 
+  it("treats a newly subscribed source with no schedule as due", async () => {
+    const database = openTestDatabase();
+    const sources = new SourceRepository(database);
+    const subscriptions = new SubscriptionRepository(database);
+    const source = await sources.create({
+      type: "rss",
+      name: "New feed",
+      canonicalUrl: "https://example.com/feed.xml",
+      avatarUrl: null,
+      externalId: "new-feed",
+      providerKey: "rss-native",
+      providerMeta: {},
+    });
+    await subscriptions.enableForSource(source.id);
+
+    await expect(sources.listDue(new Date().toISOString(), 10)).resolves.toMatchObject([
+      { id: source.id },
+    ]);
+  });
+
   it("disabling a subscription preserves its source and articles", async () => {
     const database = openTestDatabase();
     const sources = new SourceRepository(database);

@@ -84,6 +84,21 @@ describe("deterministic article parsing", () => {
     ]);
   });
 
+  it("recognizes additional public WeChat lazy-image attributes", async () => {
+    const result = await parseArticle({
+      ...baseInput,
+      html: `<div id="js_content">
+        <p>正文保留。</p>
+        <img data-backsrc="https://mmbiz.qpic.cn/back.jpg" alt="背景候选">
+        <img data-croporisrc="//mmbiz.qpic.cn/crop.jpg" alt="裁剪原图">
+      </div>`,
+    });
+    expect(result.document?.blocks.filter((block) => block.type === "image")).toMatchObject([
+      { src: "https://mmbiz.qpic.cn/back.jpg", alt: "背景候选" },
+      { src: "https://mmbiz.qpic.cn/crop.jpg", alt: "裁剪原图" },
+    ]);
+  });
+
   it("registers retained images through an injected media boundary", async () => {
     const registered: string[] = [];
     const result = await parseArticle(
@@ -105,6 +120,25 @@ describe("deterministic article parsing", () => {
     expect(
       result.document?.blocks.filter((block) => block.type === "image").map((block) => block.src),
     ).toEqual(["/v1/media/med_1", "/v1/media/med_2", "/v1/media/med_3"]);
+  });
+
+  it("keeps readable text when an image cannot be registered safely", async () => {
+    const result = await parseArticle(
+      {
+        ...baseInput,
+        html: '<div id="js_content"><p>正文仍应保留。</p><img src="http://127.0.0.1/private.png"></div>',
+      },
+      {
+        mediaRegistrar: {
+          registerRemote: async () => {
+            throw new Error("private media rejected");
+          },
+        },
+      },
+    );
+
+    expect(result.document?.blocks.map(blockText).join(" ")).toContain("正文仍应保留");
+    expect(result.document?.blocks.some((block) => block.type === "image")).toBe(false);
   });
 
   it("removes only a contextual QR/follow tail cluster", async () => {

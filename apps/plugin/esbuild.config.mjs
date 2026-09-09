@@ -1,3 +1,5 @@
+import { copyFile, mkdir } from "node:fs/promises";
+
 import { build } from "esbuild";
 
 await build({
@@ -11,3 +13,9 @@ await build({
   sourcemap: true,
   logLevel: "info",
 });
+
+await mkdir("dist", { recursive: true });
+await Promise.all([
+  copyFile("manifest.json", "dist/manifest.json"),
+  copyFile("styles.css", "dist/styles.css"),
+]);

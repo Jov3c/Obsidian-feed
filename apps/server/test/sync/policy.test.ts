@@ -16,6 +16,16 @@ describe("adaptive sync policy", () => {
         random: () => 0.5,
       }),
     ).toEqual(minutes(30));
+    expect(
+      computeNextSync({
+        now,
+        sourceType: "rss",
+        outcome: "success",
+        newArticles: 2,
+        baseIntervalMinutes: 12,
+        random: () => 0.5,
+      }),
+    ).toEqual(minutes(12));
   });
 
   it("backs off empty feeds at streaks three and six with a type cap", () => {

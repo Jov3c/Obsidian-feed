@@ -10,6 +10,16 @@ function escapeText(value: string): string {
   return value.replace(/([\\`*_[\]<>#])/gu, "\\$1");
 }
 
+function safeLink(value: string | undefined): string | null {
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    return ["http:", "https:", "mailto:"].includes(url.protocol) ? value : null;
+  } catch {
+    return null;
+  }
+}
+
 function runMarkdown(run: TextRun): string {
   let value = escapeText(run.text);
   if (run.marks?.includes("code")) {
@@ -22,7 +32,8 @@ function runMarkdown(run: TextRun): string {
     if (run.marks?.includes("italic")) value = `_${value}_`;
     if (run.marks?.includes("strike")) value = `~~${value}~~`;
   }
-  return run.href ? `[${value}](${run.href})` : value;
+  const href = safeLink(run.href);
+  return href ? `[${value}](${href})` : value;
 }
 
 const runs = (value: TextRun[]) => value.map(runMarkdown).join("");

@@ -1,4 +1,8 @@
-import { normalizeArticleDocument, type ArticleDocument } from "@obsidian-feed/content-model";
+import {
+  normalizeArticleDocument,
+  type ArticleBlock,
+  type ArticleDocument,
+} from "@obsidian-feed/content-model";
 
 import { parseDom } from "./dom.js";
 import { parseGeneric } from "./generic/generic-parser.js";
@@ -56,14 +60,20 @@ async function registerMedia(
   registrar: MediaRegistrar | undefined,
 ): Promise<ArticleDocument> {
   if (!registrar) return document;
-  const blocks = await Promise.all(
-    document.blocks.map(async (block) => {
-      if (block.type !== "image") return block;
-      const remoteUrl = block.originalSrc ?? block.src;
-      const media = await registrar.registerRemote(remoteUrl);
-      return { ...block, src: media.src, originalSrc: remoteUrl };
-    }),
-  );
+  const blocks = (
+    await Promise.all(
+      document.blocks.map(async (block): Promise<ArticleBlock | null> => {
+        if (block.type !== "image") return block;
+        const remoteUrl = block.originalSrc ?? block.src;
+        try {
+          const media = await registrar.registerRemote(remoteUrl);
+          return { ...block, src: media.src, originalSrc: remoteUrl };
+        } catch {
+          return null;
+        }
+      }),
+    )
+  ).filter((block): block is ArticleBlock => block !== null);
   return normalizeArticleDocument({ ...document, blocks });
 }
 

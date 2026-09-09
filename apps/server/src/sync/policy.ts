@@ -10,6 +10,7 @@ export interface NextSyncInput {
   emptyStreak?: number;
   consecutiveFailures?: number;
   retryAfterSeconds?: number;
+  baseIntervalMinutes?: number;
   random?: () => number;
 }
 
@@ -33,10 +34,10 @@ export function computeNextSync(input: NextSyncInput): Date {
     const failures = Math.max(1, input.consecutiveFailures ?? 1);
     minutes = delays[failures - 1] ?? (input.sourceType === "wechat" ? 720 : 480);
   } else {
-    const base = input.sourceType === "wechat" ? 60 : 30;
+    const base = input.baseIntervalMinutes ?? (input.sourceType === "wechat" ? 60 : 30);
     const emptyStreak = input.newArticles === 0 ? (input.emptyStreak ?? 0) : 0;
     const multiplier = emptyStreak >= 6 ? 2 : emptyStreak >= 3 ? 1.5 : 1;
-    const cap = input.sourceType === "wechat" ? 240 : 120;
+    const cap = Math.max(base, input.sourceType === "wechat" ? 240 : 120);
     minutes = Math.min(base * multiplier, cap);
   }
   const random = input.random ?? Math.random;

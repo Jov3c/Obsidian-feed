@@ -2,10 +2,10 @@ import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { pathToFileURL } from "node:url";
 
-import { buildApp } from "./app.js";
 import { loadConfig } from "./config.js";
 import { createDatabase } from "./db/client.js";
 import { migrateDatabase } from "./db/migrate.js";
+import { createRuntimeApp } from "./runtime.js";
 
 export async function startServer(environment: NodeJS.ProcessEnv = process.env) {
   const config = loadConfig(environment);
@@ -14,21 +14,10 @@ export async function startServer(environment: NodeJS.ProcessEnv = process.env) 
 
   try {
     migrateDatabase(database);
-    const getWechatHealth = (): "disabled" | "degraded" =>
-      config.wechat.adapter === null ? "disabled" : "degraded";
-    const app = buildApp({
+    const app = createRuntimeApp({
       config,
       database,
-      getWechatHealth,
-      systemStatus: () => {
-        database.sqlite.prepare("SELECT 1").get();
-        return {
-          version: 1,
-          database: "ok",
-          scheduler: "disabled",
-          wechat: getWechatHealth(),
-        };
-      },
+      logger: true,
     });
     await app.listen({ host: config.host, port: config.port });
     return { app, database };

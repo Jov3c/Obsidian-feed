@@ -3,7 +3,7 @@ import type { ArticleDocument } from "@obsidian-feed/content-model";
 import type { ArticleRepository } from "../db/repositories/article-repository.js";
 import type { SourceRepository } from "../db/repositories/source-repository.js";
 import type { ProviderRegistry } from "../providers/registry.js";
-import type { ArticleMeta, Source } from "../providers/types.js";
+import { ProviderError, type ArticleMeta, type Source } from "../providers/types.js";
 import { IngestService } from "./ingest-service.js";
 
 export class ArticleContentService {
@@ -20,6 +20,7 @@ export class ArticleContentService {
     if (existing.content?.documentJson) {
       return JSON.parse(existing.content.documentJson) as ArticleDocument;
     }
+    if (existing.article.contentStatus !== "pending") return null;
     const sourceRow = await this.sources.findById(existing.article.sourceId);
     if (!sourceRow) return null;
     const source: Source = {
@@ -48,8 +49,27 @@ export class ArticleContentService {
       contentStatus: existing.article.contentStatus,
       contentHash: existing.article.contentHash,
     };
-    const fetched = await this.providers.getByKey(source.providerKey).fetchArticle(article);
-    await this.ingest.ingestProviderArticles(source, [fetched]);
+    try {
+      const fetched = await this.providers.getByKey(source.providerKey).fetchArticle(article);
+      await this.ingest.ingestProviderArticles(source, [fetched]);
+    } catch (error) {
+      const blocked =
+        error instanceof ProviderError &&
+        (error.code === "CONTENT_BLOCKED" || error.code === "CONTENT_UNAVAILABLE");
+      await this.articles.setContent(articleId, {
+        documentJson: null,
+        contentHash: null,
+        contentStatus: blocked ? "unavailable" : "failed",
+        parser: null,
+        parserVersion: null,
+        parseConfidence: null,
+        parseDiagnostics: {
+          reason: "content_fetch_error",
+          ...(error instanceof ProviderError ? { errorCode: error.code } : {}),
+        },
+      });
+      return null;
+    }
     const updated = await this.articles.getDetail(articleId);
     return updated?.content?.documentJson
       ? (JSON.parse(updated.content.documentJson) as ArticleDocument)

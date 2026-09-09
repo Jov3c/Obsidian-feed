@@ -12,7 +12,16 @@ interface WorkerDependencies {
   };
   logs: {
     start(sourceId: string, providerKey: string): Promise<{ id: string }>;
-    finish(id: string, result: Record<string, unknown>): Promise<unknown>;
+    finish(
+      id: string,
+      result: {
+        status: "success" | "failed";
+        newArticles: number;
+        updatedArticles: number;
+        errorCode?: string;
+        durationMs: number;
+      },
+    ): Promise<unknown>;
   };
   providers: { getByKey(key: string): { syncSource(source: Source): Promise<SyncPage> } };
   ingest: {
@@ -23,6 +32,7 @@ interface WorkerDependencies {
   };
   now?: () => Date;
   random?: () => number;
+  intervals?: { rssMinutes: number; wechatMinutes: number };
 }
 
 export interface SyncOutcome {
@@ -56,6 +66,14 @@ export class SyncWorker {
         sourceType: source.type,
         outcome: "success",
         newArticles: stats.added,
+        ...(this.dependencies.intervals
+          ? {
+              baseIntervalMinutes:
+                source.type === "wechat"
+                  ? this.dependencies.intervals.wechatMinutes
+                  : this.dependencies.intervals.rssMinutes,
+            }
+          : {}),
         random: this.random,
       });
       await this.dependencies.sources.updateSyncState(source.id, {

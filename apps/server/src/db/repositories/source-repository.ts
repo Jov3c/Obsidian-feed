@@ -1,4 +1,4 @@
-import { and, eq, lte } from "drizzle-orm";
+import { and, eq, isNull, lte, or } from "drizzle-orm";
 
 import { newId, type Database } from "../client.js";
 import { sources, subscriptions } from "../schema.js";
@@ -78,7 +78,12 @@ export class SourceRepository {
       .select({ source: sources })
       .from(sources)
       .innerJoin(subscriptions, eq(subscriptions.sourceId, sources.id))
-      .where(and(eq(subscriptions.enabled, true), lte(sources.nextSyncAt, now)))
+      .where(
+        and(
+          eq(subscriptions.enabled, true),
+          or(isNull(sources.nextSyncAt), lte(sources.nextSyncAt, now)),
+        ),
+      )
       .orderBy(sources.nextSyncAt)
       .limit(limit)
       .all();

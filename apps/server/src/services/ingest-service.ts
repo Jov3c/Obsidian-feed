@@ -87,7 +87,7 @@ export class IngestService {
           await this.articles.setContent(row.id, {
             documentJson: null,
             contentHash: null,
-            contentStatus: "failed",
+            contentStatus: parsed.diagnostics.blocked === true ? "unavailable" : "failed",
             parser: parsed.parser,
             parserVersion: parsed.parserVersion,
             parseConfidence: parsed.confidence,

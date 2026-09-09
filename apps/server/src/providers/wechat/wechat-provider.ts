@@ -9,6 +9,7 @@ import {
   type SyncPage,
 } from "../types.js";
 import type { ProviderRegistry } from "../registry.js";
+import { SafeExternalHttpClient } from "../../http/safe-http-client.js";
 import type {
   WeChatAdapter,
   WechatSourceCandidate,
@@ -16,6 +17,7 @@ import type {
   WechatUpstreamSource,
 } from "./wechat-adapter.js";
 import { WeRssAdapter } from "./werss-adapter.js";
+import { DirectContentFetcher, type ArticleContentFetcher } from "./direct-content-fetcher.js";
 
 export interface WeChatRegistrationConfig {
   adapter: "werss" | null;
@@ -30,22 +32,26 @@ export interface WeChatRegistrationConfig {
 export function registerConfiguredWeChatProvider(
   registry: ProviderRegistry,
   config: WeChatRegistrationConfig | undefined,
+  onAdapter?: (adapter: WeChatAdapter) => void,
 ): boolean {
   if (config?.adapter !== "werss" || config.baseUrl === null || config.apiKey === null) {
     return false;
   }
+  const adapter = new WeRssAdapter({
+    baseUrl: config.baseUrl,
+    apiKey: config.apiKey,
+    requestTimeoutMs: config.requestTimeoutMs,
+  });
+  onAdapter?.(adapter);
   registry.register(
     new WeChatProvider(
-      new WeRssAdapter({
-        baseUrl: config.baseUrl,
-        apiKey: config.apiKey,
-        requestTimeoutMs: config.requestTimeoutMs,
-      }),
+      adapter,
       {
         initialBackfillLimit: config.initialBackfillLimit,
         pageSize: config.pageSize,
         maxPages: config.maxPages,
       },
+      new DirectContentFetcher(new SafeExternalHttpClient()),
     ),
   );
   return true;
@@ -84,6 +90,7 @@ export class WeChatProvider implements ContentProvider {
       pageSize: number;
       maxPages: number;
     },
+    private readonly directContentFetcher?: ArticleContentFetcher,
   ) {}
 
   async canHandle(input: ResolveInput): Promise<boolean> {
@@ -197,10 +204,16 @@ export class WeChatProvider implements ContentProvider {
       rawContent: null,
     };
     const content = await this.adapter.fetchContent(upstream);
+    const resolvedContent =
+      content.html || !this.directContentFetcher
+        ? content
+        : await this.directContentFetcher.fetch(content.canonicalUrl);
     return {
       ...this.toProviderArticle(upstream),
-      canonicalUrl: content.canonicalUrl,
-      ...(content.html ? { rawContent: content.html, rawContentType: "html" as const } : {}),
+      canonicalUrl: resolvedContent.canonicalUrl,
+      ...(resolvedContent.html
+        ? { rawContent: resolvedContent.html, rawContentType: "html" as const }
+        : {}),
     };
   }
 

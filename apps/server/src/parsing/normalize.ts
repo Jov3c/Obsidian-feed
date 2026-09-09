@@ -64,7 +64,7 @@ function paragraph(nodes: DomNode[], baseUrl: string): ParagraphBlock | null {
 }
 
 function safeImageUrl(element: DomElement, baseUrl: string): string | null {
-  for (const name of ["data-src", "src", "data-original"]) {
+  for (const name of ["data-src", "data-original", "data-backsrc", "data-croporisrc", "src"]) {
     const value = attribute(element, name);
     if (!value) continue;
     try {

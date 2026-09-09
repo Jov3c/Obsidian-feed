@@ -135,4 +135,36 @@ describe("WeChatProvider", () => {
       { limit: 10, offset: 20 },
     ]);
   });
+
+  it("uses the bounded direct fetcher when the adapter has no article body", async () => {
+    const provider = new WeChatProvider(
+      new FakeAdapter(),
+      { initialBackfillLimit: 30, pageSize: 20, maxPages: 3 },
+      {
+        fetch: async (url) => ({
+          html: '<div id="js_content"><p>Direct public body.</p></div>',
+          canonicalUrl: url,
+        }),
+      },
+    );
+
+    await expect(
+      provider.fetchArticle({
+        id: "art_1",
+        sourceId: "src_1",
+        externalId: "wx_1",
+        canonicalUrl: "https://mp.weixin.qq.com/s/direct",
+        title: "Direct",
+        author: null,
+        coverUrl: null,
+        publishedAt: null,
+        fetchedAt: new Date().toISOString(),
+        contentStatus: "pending",
+        contentHash: null,
+      }),
+    ).resolves.toMatchObject({
+      rawContent: expect.stringContaining("Direct public body."),
+      rawContentType: "html",
+    });
+  });
 });

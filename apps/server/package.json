@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc -p tsconfig.build.json && node esbuild.config.mjs",
+    "start": "node dist/server.js",
     "db:backup": "node dist/cli/backup.js",
     "status": "node dist/cli/status.js",
     "test": "vitest run",

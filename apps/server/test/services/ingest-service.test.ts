@@ -128,4 +128,25 @@ describe("IngestService", () => {
       { content_status: "ready", count: 1 },
     ]);
   });
+
+  it("marks an access-control or verification page unavailable", async () => {
+    const { database, source, repository } = await fixture();
+    const service = new IngestService({
+      articles: repository,
+      parseArticle: async () => ({
+        document: null,
+        status: "failed",
+        parser: "wechat-parser",
+        parserVersion: "1",
+        confidence: 0,
+        diagnostics: { blocked: true },
+      }),
+    });
+
+    await service.ingestProviderArticles(source, [article()]);
+
+    expect(database.sqlite.prepare("SELECT content_status FROM articles").get()).toEqual({
+      content_status: "unavailable",
+    });
+  });
 });
