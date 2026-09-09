@@ -68,6 +68,10 @@ export class FeedView extends ItemView {
     this.render();
   }
 
+  currentArticleId(): string | null {
+    return this.route.name === "reader" ? this.route.articleId : null;
+  }
+
   async refresh(): Promise<void> {
     if (this.route.name === "subscriptions") await this.loadSubscriptions();
     else await this.today.reload();

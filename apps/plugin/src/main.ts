@@ -4,6 +4,8 @@ import { FeedApiClient } from "./api/client.js";
 import { ObsidianFeedSettingsTab } from "./settings/settings-tab.js";
 import { migratePluginData, type PluginDataV1, type PluginSettings } from "./state/plugin-data.js";
 import { ReadingStateStore } from "./state/reading-state.js";
+import { ArticleExporter } from "./vault/exporter.js";
+import { ObsidianVaultAdapter } from "./vault/obsidian-vault-adapter.js";
 import { FeedView, FEED_VIEW_TYPE } from "./views/feed-view.js";
 
 export default class ObsidianFeedPlugin extends Plugin {
@@ -32,6 +34,17 @@ export default class ObsidianFeedPlugin extends Plugin {
       id: "refresh-feed-list",
       name: "Refresh current feed list",
       callback: () => void this.withFeedView((view) => view.refresh()),
+    });
+    this.addCommand({
+      id: "save-current-article",
+      name: "Save current article to vault",
+      checkCallback: (checking) => {
+        const view = this.app.workspace.getLeavesOfType(FEED_VIEW_TYPE)[0]?.view;
+        const articleId = view instanceof FeedView ? view.currentArticleId() : null;
+        if (!articleId) return false;
+        if (!checking) void this.saveArticle(articleId);
+        return true;
+      },
     });
   }
 
@@ -83,5 +96,18 @@ export default class ObsidianFeedPlugin extends Plugin {
     await this.openFeed();
     const view = this.app.workspace.getLeavesOfType(FEED_VIEW_TYPE)[0]?.view;
     if (view instanceof FeedView) await action(view);
+  }
+
+  private async saveArticle(articleId: string): Promise<void> {
+    try {
+      const detail = await this.api.getArticle(articleId);
+      const exporter = new ArticleExporter(new ObsidianVaultAdapter(this.app.vault), {
+        saveRoot: this.data.settings.saveRoot,
+      });
+      const file = await exporter.save(detail);
+      new Notice(`已保存到 ${file.path}`);
+    } catch {
+      new Notice("文章保存失败");
+    }
   }
 }
