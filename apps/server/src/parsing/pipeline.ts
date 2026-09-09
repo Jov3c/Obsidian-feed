@@ -1,4 +1,4 @@
-import type { ArticleDocument } from "@obsidian-feed/content-model";
+import { normalizeArticleDocument, type ArticleDocument } from "@obsidian-feed/content-model";
 
 import { parseDom } from "./dom.js";
 import { parseGeneric } from "./generic/generic-parser.js";
@@ -26,6 +26,14 @@ export interface ParseResult {
   diagnostics: Record<string, unknown>;
 }
 
+export interface MediaRegistrar {
+  registerRemote(url: string): Promise<{ id: string; src: string }>;
+}
+
+export interface ParseOptions {
+  mediaRegistrar?: MediaRegistrar;
+}
+
 const parserVersion = "1.0.0";
 
 function failed(parser: string, diagnostics: Record<string, unknown>): ParseResult {
@@ -43,7 +51,26 @@ function blockedPage(html: string): boolean {
   return /(?:验证码|captcha|安全验证|登录后继续|请先登录|访问过于频繁)/iu.test(compact);
 }
 
-export async function parseArticle(input: RawParseInput): Promise<ParseResult> {
+async function registerMedia(
+  document: ArticleDocument,
+  registrar: MediaRegistrar | undefined,
+): Promise<ArticleDocument> {
+  if (!registrar) return document;
+  const blocks = await Promise.all(
+    document.blocks.map(async (block) => {
+      if (block.type !== "image") return block;
+      const remoteUrl = block.originalSrc ?? block.src;
+      const media = await registrar.registerRemote(remoteUrl);
+      return { ...block, src: media.src, originalSrc: remoteUrl };
+    }),
+  );
+  return normalizeArticleDocument({ ...document, blocks });
+}
+
+export async function parseArticle(
+  input: RawParseInput,
+  options: ParseOptions = {},
+): Promise<ParseResult> {
   const parser = parserName(input.sourceType);
   if (input.contentType && !/(?:text\/html|application\/xhtml\+xml)/iu.test(input.contentType)) {
     return failed(parser, { reason: "unsupported_content_type" });
@@ -62,7 +89,7 @@ export async function parseArticle(input: RawParseInput): Promise<ParseResult> {
     const output = parseWechat(input, root);
     if (!output.document) return failed(parser, output.diagnostics);
     return {
-      document: output.document,
+      document: await registerMedia(output.document, options.mediaRegistrar),
       status: output.confidence >= 0.65 ? "ready" : "partial",
       parser,
       parserVersion,
@@ -75,7 +102,7 @@ export async function parseArticle(input: RawParseInput): Promise<ParseResult> {
     input.sourceType === "rss" ? parseRssContent(input, root) : parseGeneric(input, root);
   if (!document) return failed(parser, { reason: "empty_content", nodeCount, maxDepth });
   return {
-    document,
+    document: await registerMedia(document, options.mediaRegistrar),
     status: "ready",
     parser,
     parserVersion,

@@ -4,6 +4,7 @@ import type { Database } from "./db/client.js";
 import { registerBearerAuth } from "./http/auth.js";
 import { registerErrorHandler } from "./http/errors.js";
 import { registerHealthRoutes, type WechatHealth } from "./http/routes/health.js";
+import { registerMediaRoutes, type MediaRouteService } from "./http/routes/media.js";
 import {
   registerSubscriptionRoutes,
   type SubscriptionRouteService,
@@ -24,6 +25,7 @@ export interface BuildAppDependencies {
   database: Database;
   getWechatHealth(): Promise<WechatHealth> | WechatHealth;
   subscriptionService?: SubscriptionRouteService;
+  mediaService?: MediaRouteService;
   logger?: boolean | FastifyBaseLogger;
 }
 
@@ -39,6 +41,7 @@ export function buildApp(dependencies: BuildAppDependencies): FastifyInstance {
   const subscriptionService =
     dependencies.subscriptionService ?? createDefaultSubscriptionService(dependencies);
   registerSubscriptionRoutes(app, subscriptionService);
+  if (dependencies.mediaService) registerMediaRoutes(app, dependencies.mediaService);
 
   return app;
 }

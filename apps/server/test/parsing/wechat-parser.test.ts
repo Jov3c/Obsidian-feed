@@ -84,6 +84,29 @@ describe("deterministic article parsing", () => {
     ]);
   });
 
+  it("registers retained images through an injected media boundary", async () => {
+    const registered: string[] = [];
+    const result = await parseArticle(
+      { ...baseInput, html: fixture("image-heavy.html") },
+      {
+        mediaRegistrar: {
+          registerRemote: async (url) => {
+            registered.push(url);
+            return { id: `med_${registered.length}`, src: `/v1/media/med_${registered.length}` };
+          },
+        },
+      },
+    );
+    expect(registered).toEqual([
+      "https://mmbiz.qpic.cn/a.jpg",
+      "https://mp.weixin.qq.com/b.jpg",
+      "https://mmbiz.qpic.cn/c.gif",
+    ]);
+    expect(
+      result.document?.blocks.filter((block) => block.type === "image").map((block) => block.src),
+    ).toEqual(["/v1/media/med_1", "/v1/media/med_2", "/v1/media/med_3"]);
+  });
+
   it("removes only a contextual QR/follow tail cluster", async () => {
     const result = await parseArticle({ ...baseInput, html: fixture("qr-footer.html") });
     const serialized = JSON.stringify(result.document);
