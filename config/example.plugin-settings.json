@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "settings": {
+    "serverBaseUrl": "http://127.0.0.1:43110",
+    "serverToken": "",
+    "saveRoot": "Feed",
+    "imageSaveMode": "local",
+    "readerFontSize": "standard",
+    "readerLineHeight": "comfortable",
+    "readerWidth": "standard"
+  },
+  "reading": {},
+  "ui": {
+    "lastRoute": "today"
+  }
+}

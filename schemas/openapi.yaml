@@ -1,0 +1,363 @@
+openapi: 3.1.0
+info:
+  title: Obsidian Feed Server API
+  version: 1.0.0
+servers:
+  - url: http://127.0.0.1:43110
+security:
+  - bearerAuth: []
+paths:
+  /health/live:
+    get:
+      security: []
+      responses:
+        '200':
+          description: Process is alive
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status: { const: ok }
+  /health/ready:
+    get:
+      responses:
+        '200':
+          description: Readiness
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadyResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /v1/subscriptions/resolve:
+    post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [input]
+              properties:
+                input: { type: string, minLength: 1, maxLength: 4096 }
+      responses:
+        '200':
+          description: Resolved candidate
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [candidate]
+                properties:
+                  candidate: { $ref: '#/components/schemas/ResolvedCandidate' }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '422': { $ref: '#/components/responses/Error' }
+        '502': { $ref: '#/components/responses/Error' }
+  /v1/subscriptions:
+    get:
+      parameters:
+        - in: query
+          name: includeDisabled
+          schema: { type: boolean, default: false }
+      responses:
+        '200':
+          description: Subscriptions
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/Subscription' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [resolutionToken]
+              properties:
+                resolutionToken: { type: string, minLength: 20, maxLength: 16384 }
+      responses:
+        '200':
+          description: Subscription created or existing subscription enabled
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [subscription]
+                properties:
+                  subscription: { $ref: '#/components/schemas/Subscription' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '422': { $ref: '#/components/responses/Error' }
+  /v1/subscriptions/{id}:
+    delete:
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '204': { description: Subscription disabled }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/Error' }
+  /v1/articles:
+    get:
+      parameters:
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 50, default: 30 }
+        - in: query
+          name: cursor
+          schema: { type: string, maxLength: 4096 }
+        - in: query
+          name: sourceId
+          schema: { type: string, maxLength: 128 }
+      responses:
+        '200':
+          description: Article page
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticlePage'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /v1/articles/{id}:
+    get:
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Article detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleDetail'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/Error' }
+  /v1/sources/{id}/refresh:
+    post:
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '202':
+          description: Refresh accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, sourceId]
+                properties:
+                  status: { enum: [accepted, already_running] }
+                  sourceId: { type: string }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/Error' }
+        '429': { $ref: '#/components/responses/Error' }
+  /v1/sources/{id}/status:
+    get:
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Source status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SourceStatusResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/Error' }
+  /v1/system/status:
+    get:
+      responses:
+        '200':
+          description: System diagnostic status
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /v1/media/{id}:
+    get:
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Image bytes
+          headers:
+            ETag:
+              schema: { type: string }
+          content:
+            image/jpeg: {}
+            image/png: {}
+            image/gif: {}
+            image/webp: {}
+            image/avif: {}
+        '304': { description: Not modified }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/Error' }
+        '502': { $ref: '#/components/responses/Error' }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  parameters:
+    IdPath:
+      in: path
+      name: id
+      required: true
+      schema: { type: string, minLength: 1, maxLength: 128 }
+  responses:
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+    Error:
+      description: Error
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+  schemas:
+    ErrorResponse:
+      type: object
+      additionalProperties: false
+      required: [error]
+      properties:
+        error:
+          type: object
+          additionalProperties: false
+          required: [code, message, retryable, requestId]
+          properties:
+            code: { type: string }
+            message: { type: string }
+            retryable: { type: boolean }
+            retryAfterSeconds: { type: [integer, 'null'], minimum: 0 }
+            requestId: { type: string }
+    ReadyResponse:
+      type: object
+      required: [status, database, wechat]
+      properties:
+        status: { enum: [ok, degraded] }
+        database: { enum: [ok, error] }
+        wechat: { enum: [ok, degraded, disabled] }
+    SourceSummary:
+      type: object
+      additionalProperties: false
+      required: [id, type, name, avatarUrl]
+      properties:
+        id: { type: string }
+        type: { enum: [rss, wechat] }
+        name: { type: string }
+        avatarUrl: { type: [string, 'null'] }
+    Source:
+      allOf:
+        - $ref: '#/components/schemas/SourceSummary'
+        - type: object
+          required: [canonicalUrl, externalId, providerKey, status, lastSyncedAt, nextSyncAt]
+          properties:
+            canonicalUrl: { type: [string, 'null'] }
+            externalId: { type: [string, 'null'] }
+            providerKey: { type: string }
+            status: { enum: [active, rate_limited, needs_auth, parse_error, unavailable, disabled] }
+            lastSyncedAt: { type: [string, 'null'], format: date-time }
+            nextSyncAt: { type: [string, 'null'], format: date-time }
+    ResolvedCandidate:
+      type: object
+      additionalProperties: false
+      required: [kind, providerKey, name, canonicalUrl, avatarUrl, externalId, resolutionToken]
+      properties:
+        kind: { enum: [rss, wechat] }
+        providerKey: { type: string }
+        name: { type: string }
+        canonicalUrl: { type: [string, 'null'] }
+        avatarUrl: { type: [string, 'null'] }
+        externalId: { type: [string, 'null'] }
+        resolutionToken: { type: string }
+    Subscription:
+      type: object
+      additionalProperties: false
+      required: [id, enabled, source]
+      properties:
+        id: { type: string }
+        enabled: { type: boolean }
+        source: { $ref: '#/components/schemas/Source' }
+    ArticleListItem:
+      type: object
+      additionalProperties: false
+      required: [id, title, author, canonicalUrl, publishedAt, contentStatus, source]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        author: { type: [string, 'null'] }
+        canonicalUrl: { type: string }
+        publishedAt: { type: [string, 'null'], format: date-time }
+        contentStatus: { enum: [pending, ready, partial, unavailable, failed] }
+        source: { $ref: '#/components/schemas/SourceSummary' }
+    ArticlePage:
+      type: object
+      additionalProperties: false
+      required: [items, nextCursor]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/ArticleListItem' }
+        nextCursor: { type: [string, 'null'] }
+    ArticleMeta:
+      type: object
+      additionalProperties: false
+      required: [id, sourceId, externalId, canonicalUrl, title, author, coverUrl, publishedAt, fetchedAt, contentStatus, contentHash]
+      properties:
+        id: { type: string }
+        sourceId: { type: string }
+        externalId: { type: [string, 'null'] }
+        canonicalUrl: { type: string }
+        title: { type: string }
+        author: { type: [string, 'null'] }
+        coverUrl: { type: [string, 'null'] }
+        publishedAt: { type: [string, 'null'], format: date-time }
+        fetchedAt: { type: string, format: date-time }
+        contentStatus: { enum: [pending, ready, partial, unavailable, failed] }
+        contentHash: { type: [string, 'null'] }
+    ArticleDetail:
+      type: object
+      additionalProperties: false
+      required: [article, source, document, parse]
+      properties:
+        article: { $ref: '#/components/schemas/ArticleMeta' }
+        source: { $ref: '#/components/schemas/SourceSummary' }
+        document:
+          oneOf:
+            - type: 'null'
+            - type: object
+              description: Must conform to schemas/article-document.schema.json
+        parse:
+          type: object
+          additionalProperties: false
+          required: [parser, parserVersion, confidence]
+          properties:
+            parser: { type: [string, 'null'] }
+            parserVersion: { type: [string, 'null'] }
+            confidence: { type: [number, 'null'], minimum: 0, maximum: 1 }
+    SourceStatusResponse:
+      type: object
+      additionalProperties: false
+      required: [id, status, lastSyncedAt, nextSyncAt, lastError]
+      properties:
+        id: { type: string }
+        status: { enum: [active, rate_limited, needs_auth, parse_error, unavailable, disabled] }
+        lastSyncedAt: { type: [string, 'null'], format: date-time }
+        nextSyncAt: { type: [string, 'null'], format: date-time }
+        lastError:
+          oneOf:
+            - type: 'null'
+            - type: object
+              required: [code, message]
+              properties:
+                code: { type: string }
+                message: { type: string }
