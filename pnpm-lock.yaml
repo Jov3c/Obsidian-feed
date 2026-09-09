@@ -36,6 +36,9 @@ importers:
 
   apps/server:
     dependencies:
+      "@obsidian-feed/content-model":
+        specifier: workspace:*
+        version: link:../../packages/content-model
       "@obsidian-feed/contracts":
         specifier: workspace:*
         version: link:../../packages/contracts
