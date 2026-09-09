@@ -72,9 +72,7 @@ YAML string 必须安全序列化，不手拼可能破坏 YAML 的标题。
 
 ## 我的笔记
 
-
 ## 我的摘录
-
 
 ---
 
@@ -101,7 +99,9 @@ YAML string 必须安全序列化，不手拼可能破坏 YAML 的标题。
 
 ```markdown
 <!-- obsidian-feed:body:start -->
+
 ## 正文
+
 ...
 <!-- obsidian-feed:body:end -->
 ```

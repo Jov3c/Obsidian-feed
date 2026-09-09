@@ -39,7 +39,7 @@ Authorization: Bearer <FEED_SERVER_TOKEN>
 无需鉴权。
 
 ```json
-{"status":"ok"}
+{ "status": "ok" }
 ```
 
 ### `GET /health/ready`
@@ -48,9 +48,9 @@ Authorization: Bearer <FEED_SERVER_TOKEN>
 
 ```json
 {
-  "status":"ok",
-  "database":"ok",
-  "wechat":"ok|degraded|disabled"
+  "status": "ok",
+  "database": "ok",
+  "wechat": "ok|degraded|disabled"
 }
 ```
 
@@ -61,7 +61,7 @@ Authorization: Bearer <FEED_SERVER_TOKEN>
 Request：
 
 ```json
-{"input":"https://mp.weixin.qq.com/s/..."}
+{ "input": "https://mp.weixin.qq.com/s/..." }
 ```
 
 Response：
@@ -69,13 +69,13 @@ Response：
 ```json
 {
   "candidate": {
-    "kind":"wechat",
-    "providerKey":"wechat-werss",
-    "name":"机器之心",
-    "canonicalUrl":null,
-    "avatarUrl":"https://...",
-    "externalId":"...",
-    "resolutionToken":"signed-short-lived-token"
+    "kind": "wechat",
+    "providerKey": "wechat-werss",
+    "name": "机器之心",
+    "canonicalUrl": null,
+    "avatarUrl": "https://...",
+    "externalId": "...",
+    "resolutionToken": "signed-short-lived-token"
   }
 }
 ```
@@ -94,7 +94,7 @@ Response：
 ### `POST /v1/subscriptions`
 
 ```json
-{"resolutionToken":"..."}
+{ "resolutionToken": "..." }
 ```
 
 返回：
@@ -147,21 +147,21 @@ Response：
 {
   "items": [
     {
-      "id":"art_xxx",
-      "title":"...",
-      "author":"...",
-      "canonicalUrl":"...",
-      "publishedAt":"...",
-      "contentStatus":"ready",
+      "id": "art_xxx",
+      "title": "...",
+      "author": "...",
+      "canonicalUrl": "...",
+      "publishedAt": "...",
+      "contentStatus": "ready",
       "source": {
-        "id":"src_xxx",
-        "type":"wechat",
-        "name":"机器之心",
-        "avatarUrl":"..."
+        "id": "src_xxx",
+        "type": "wechat",
+        "name": "机器之心",
+        "avatarUrl": "..."
       }
     }
   ],
-  "nextCursor":"..."
+  "nextCursor": "..."
 }
 ```
 
@@ -185,8 +185,8 @@ Response：
 
 ```json
 {
-  "status":"accepted",
-  "sourceId":"src_xxx"
+  "status": "accepted",
+  "sourceId": "src_xxx"
 }
 ```
 
@@ -195,9 +195,9 @@ Response：
 ```json
 {
   "error": {
-    "code":"SOURCE_REFRESH_THROTTLED",
-    "retryable":true,
-    "retryAfterSeconds":420
+    "code": "SOURCE_REFRESH_THROTTLED",
+    "retryable": true,
+    "retryAfterSeconds": 420
   }
 }
 ```
@@ -208,13 +208,13 @@ Response：
 
 ```json
 {
-  "id":"src_xxx",
-  "status":"needs_auth",
-  "lastSyncedAt":"...",
-  "nextSyncAt":"...",
+  "id": "src_xxx",
+  "status": "needs_auth",
+  "lastSyncedAt": "...",
+  "nextSyncAt": "...",
   "lastError": {
-    "code":"WECHAT_AUTH_REQUIRED",
-    "message":"微信公众号采集服务需要重新授权"
+    "code": "WECHAT_AUTH_REQUIRED",
+    "message": "微信公众号采集服务需要重新授权"
   }
 }
 ```

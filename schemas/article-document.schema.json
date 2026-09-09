@@ -90,10 +90,7 @@
         "blocks": {
           "type": "array",
           "items": {
-            "oneOf": [
-              { "$ref": "#/$defs/paragraph" },
-              { "$ref": "#/$defs/heading" }
-            ]
+            "oneOf": [{ "$ref": "#/$defs/paragraph" }, { "$ref": "#/$defs/heading" }]
           }
         }
       }
