@@ -4,8 +4,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "node -e \"\"",
-    "test": "vitest run --passWithNoTests",
-    "typecheck": "node -e \"\""
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "drizzle-orm": "1.0.0-rc.4",
+    "zod": "4.5.4"
   }
 }
