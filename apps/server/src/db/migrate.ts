@@ -1,13 +1,18 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import type { Database } from "./client.js";
 
-const initialMigrationUrl = new URL("../../drizzle/0000_initial.sql", import.meta.url);
+function defaultMigrationPath(): string {
+  const candidates = [
+    new URL("../../drizzle/0000_initial.sql", import.meta.url),
+    new URL("../drizzle/0000_initial.sql", import.meta.url),
+  ];
+  const path = candidates.map((url) => fileURLToPath(url)).find(existsSync);
+  if (!path) throw new Error("Initial database migration was not found");
+  return path;
+}
 
-export function migrateDatabase(
-  database: Database,
-  migrationPath = fileURLToPath(initialMigrationUrl),
-): void {
+export function migrateDatabase(database: Database, migrationPath = defaultMigrationPath()): void {
   database.sqlite.exec(readFileSync(migrationPath, "utf8"));
 }

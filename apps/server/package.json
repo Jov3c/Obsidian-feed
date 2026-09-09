@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json && node esbuild.config.mjs",
+    "db:backup": "node dist/cli/backup.js",
+    "status": "node dist/cli/status.js",
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json"
   },
@@ -17,5 +19,8 @@
     "ipaddr.js": "2.5.0",
     "parse5": "8.0.1",
     "zod": "4.5.4"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
   }
 }

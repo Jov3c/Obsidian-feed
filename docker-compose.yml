@@ -1,0 +1,38 @@
+services:
+  feed-server:
+    build:
+      context: .
+      dockerfile: apps/server/Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      PORT: "43110"
+      HOST: "0.0.0.0"
+      DATABASE_PATH: /data/feed.sqlite
+      DATA_DIR: /data
+    ports:
+      - "43110:43110"
+    volumes:
+      - feed-data:/data
+    networks:
+      - feed-backend
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:43110/health/live').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  feed-data:
+
+networks:
+  feed-backend:
+    name: obsidian-feed

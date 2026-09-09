@@ -1,0 +1,12 @@
+.git
+.github
+.worktrees
+node_modules
+**/node_modules
+**/dist
+coverage
+data
+.env
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
