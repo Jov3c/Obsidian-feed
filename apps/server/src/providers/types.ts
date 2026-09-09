@@ -37,6 +37,7 @@ export interface Source {
   avatarUrl: string | null;
   externalId: string | null;
   providerKey: string;
+  providerMeta?: Record<string, unknown>;
   status: "active" | "rate_limited" | "needs_auth" | "parse_error" | "unavailable" | "disabled";
   lastSyncedAt: string | null;
   nextSyncAt: string | null;

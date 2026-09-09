@@ -12,11 +12,15 @@ import { SafeExternalHttpClient } from "./http/safe-http-client.js";
 import { createRequestId } from "./http/request-id.js";
 import { ProviderRegistry } from "./providers/registry.js";
 import { RssProvider } from "./providers/rss/rss-provider.js";
+import {
+  registerConfiguredWeChatProvider,
+  type WeChatRegistrationConfig,
+} from "./providers/wechat/wechat-provider.js";
 import { ResolutionTokenService } from "./security/resolution-token.js";
 import { SubscriptionService } from "./services/subscription-service.js";
 
 export interface BuildAppDependencies {
-  config: { feedServerToken: string };
+  config: { feedServerToken: string; wechat?: WeChatRegistrationConfig };
   database: Database;
   getWechatHealth(): Promise<WechatHealth> | WechatHealth;
   subscriptionService?: SubscriptionRouteService;
@@ -41,6 +45,7 @@ export function buildApp(dependencies: BuildAppDependencies): FastifyInstance {
 
 function createDefaultSubscriptionService(dependencies: BuildAppDependencies): SubscriptionService {
   const providers = new ProviderRegistry();
+  registerConfiguredWeChatProvider(providers, dependencies.config.wechat);
   providers.register(new RssProvider(new SafeExternalHttpClient()));
   return new SubscriptionService({
     database: dependencies.database,

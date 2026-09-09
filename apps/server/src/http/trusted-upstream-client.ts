@@ -21,6 +21,19 @@ export class TrustedUpstreamClient {
   }
 
   async getText(path: string, limits: HttpLimits): Promise<HttpTextResponse> {
+    return this.requestText("GET", path, limits);
+  }
+
+  async postJson(path: string, value: unknown, limits: HttpLimits): Promise<HttpTextResponse> {
+    return this.requestText("POST", path, limits, JSON.stringify(value));
+  }
+
+  private async requestText(
+    method: "GET" | "POST",
+    path: string,
+    limits: HttpLimits,
+    bodyText?: string,
+  ): Promise<HttpTextResponse> {
     if (/^[a-z][a-z\d+.-]*:/iu.test(path) || path.startsWith("//")) {
       throw new TypeError("Trusted upstream request path must be relative");
     }
@@ -30,22 +43,33 @@ export class TrustedUpstreamClient {
       throw new TypeError("Trusted upstream request must remain on the configured origin");
     }
 
+    const requestBody = bodyText === undefined ? undefined : Buffer.from(bodyText);
     const raw = await this.requestOnce({
       url,
+      method,
       timeoutMs: limits.timeoutMs ?? 15_000,
-      ...(limits.headers ? { headers: limits.headers } : {}),
+      headers: {
+        ...limits.headers,
+        ...(requestBody
+          ? {
+              "content-type": "application/json",
+              "content-length": String(requestBody.byteLength),
+            }
+          : {}),
+      },
+      ...(requestBody ? { body: requestBody } : {}),
     });
     const headers = responseHeaders(raw.headers);
     if (new Set([301, 302, 303, 307, 308]).has(raw.statusCode)) {
       raw.body.resume();
       throw new AppError("UPSTREAM_UNAVAILABLE", 502, true, "Trusted upstream redirect rejected");
     }
-    const body = await readLimitedBody(raw.body, limits.maxBytes);
+    const responseBody = await readLimitedBody(raw.body, limits.maxBytes);
     return {
       statusCode: raw.statusCode,
       headers,
       finalUrl: url.href,
-      body: body.toString("utf8"),
+      body: responseBody.toString("utf8"),
     };
   }
 }

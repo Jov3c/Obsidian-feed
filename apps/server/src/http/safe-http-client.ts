@@ -16,7 +16,9 @@ export interface RequestTarget {
   url: URL;
   pinned?: Pick<SafeExternalTarget, "address" | "family">;
   timeoutMs: number;
+  method?: "GET" | "POST";
   headers?: Record<string, string>;
+  body?: Buffer;
 }
 
 export type RequestOnce = (target: RequestTarget) => Promise<RawHttpResponse>;
@@ -68,13 +70,20 @@ async function collectBody(body: Readable, maxBytes: number): Promise<Buffer> {
   return Buffer.concat(chunks);
 }
 
-export const nodeRequestOnce: RequestOnce = async ({ url, pinned, timeoutMs, headers }) =>
+export const nodeRequestOnce: RequestOnce = async ({
+  url,
+  pinned,
+  timeoutMs,
+  method,
+  headers,
+  body,
+}) =>
   new Promise((resolve, reject) => {
     const requester = url.protocol === "https:" ? requestHttps : requestHttp;
     const request = requester(
       url,
       {
-        method: "GET",
+        method: method ?? "GET",
         headers,
         ...(pinned
           ? {
@@ -95,7 +104,7 @@ export const nodeRequestOnce: RequestOnce = async ({ url, pinned, timeoutMs, hea
       request.destroy(new Error("Upstream request timed out"));
     });
     request.once("error", reject);
-    request.end();
+    request.end(body);
   });
 
 const redirectStatuses = new Set([301, 302, 303, 307, 308]);
