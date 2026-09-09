@@ -13,6 +13,7 @@
   },
   "devDependencies": {
     "esbuild": "^0.28.2",
+    "jsdom": "^30.0.1",
     "obsidian": "^1.13.1"
   }
 }
