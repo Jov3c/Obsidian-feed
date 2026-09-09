@@ -1,8 +1,9 @@
 import { normalizePath, TFile, type Vault } from "obsidian";
 
 import type { VaultAdapter, VaultFile } from "./exporter.js";
+import type { BinaryVaultAdapter } from "./media-downloader.js";
 
-export class ObsidianVaultAdapter implements VaultAdapter {
+export class ObsidianVaultAdapter implements VaultAdapter, BinaryVaultAdapter {
   constructor(private readonly vault: Vault) {}
 
   async exists(path: string): Promise<boolean> {
@@ -26,6 +27,12 @@ export class ObsidianVaultAdapter implements VaultAdapter {
     if (!(file instanceof TFile)) throw new Error("Note not found");
     await this.vault.modify(file, content);
     return file;
+  }
+
+  async createBinary(path: string, value: ArrayBuffer): Promise<void> {
+    const normalized = normalizePath(path);
+    await this.ensureParent(normalized);
+    await this.vault.createBinary(normalized, value);
   }
 
   async findByArticleId(id: string): Promise<string | null> {

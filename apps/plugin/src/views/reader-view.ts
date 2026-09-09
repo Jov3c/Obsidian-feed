@@ -5,6 +5,7 @@ import { ImageViewer } from "../reader/image-viewer.js";
 import { AuthenticatedMediaLoader } from "../reader/media-loader.js";
 import { ArticleRenderer, type RenderHandle } from "../reader/renderer.js";
 import { captureScrollPosition, restoreScrollPosition } from "../reader/scroll-state.js";
+import { SelectionActions } from "../reader/selection.js";
 import { ToolbarController } from "../reader/toolbar-controller.js";
 import { shouldMarkRead } from "../state/reading-state.js";
 import { actionButton, element } from "./dom.js";
@@ -14,6 +15,7 @@ export class ReaderViewController {
   private handle: RenderHandle | null = null;
   private toolbar: ToolbarController | null = null;
   private scrollCleanup: (() => void) | null = null;
+  private selectionCleanup: (() => void) | null = null;
   private readonly viewer = new ImageViewer();
 
   constructor(private readonly plugin: ObsidianFeedPlugin) {}
@@ -70,6 +72,9 @@ export class ReaderViewController {
         mediaLoader: loader,
         onImageOpen: (source) => this.viewer.open(source, document),
       });
+      this.selectionCleanup = new SelectionActions(document, async (text) => {
+        await this.plugin.appendExcerpt(articleId, text);
+      }).attach(content, toolbar);
       this.toolbar = new ToolbarController(container, toolbar, progress);
       const openedAt = Date.now();
       let lastCapture = 0;
@@ -103,6 +108,8 @@ export class ReaderViewController {
     void this.plugin.readingState.flush();
   }
   private disposeRender(): void {
+    this.selectionCleanup?.();
+    this.selectionCleanup = null;
     this.scrollCleanup?.();
     this.scrollCleanup = null;
     this.toolbar?.dispose();

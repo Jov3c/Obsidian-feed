@@ -1,10 +1,12 @@
 import { Notice, Plugin, requestUrl } from "obsidian";
 
 import { FeedApiClient } from "./api/client.js";
+import { ExcerptController } from "./reader/selection.js";
 import { ObsidianFeedSettingsTab } from "./settings/settings-tab.js";
 import { migratePluginData, type PluginDataV1, type PluginSettings } from "./state/plugin-data.js";
 import { ReadingStateStore } from "./state/reading-state.js";
 import { ArticleExporter } from "./vault/exporter.js";
+import { VaultMediaDownloader } from "./vault/media-downloader.js";
 import { ObsidianVaultAdapter } from "./vault/obsidian-vault-adapter.js";
 import { FeedView, FEED_VIEW_TYPE } from "./views/feed-view.js";
 
@@ -12,11 +14,18 @@ export default class ObsidianFeedPlugin extends Plugin {
   data!: PluginDataV1;
   api!: FeedApiClient;
   readingState!: ReadingStateStore;
+  private exporter!: ArticleExporter;
+  private excerptController!: ExcerptController;
 
   async onload(): Promise<void> {
     this.data = migratePluginData(await this.loadData());
     this.readingState = new ReadingStateStore(this.data, () => this.savePluginData());
     this.rebuildClient();
+    this.rebuildExporter();
+    this.excerptController = new ExcerptController({
+      getArticle: (articleId) => this.api.getArticle(articleId),
+      appendExcerpt: (detail, selectedText) => this.exporter.appendExcerpt(detail, selectedText),
+    });
     this.registerView(FEED_VIEW_TYPE, (leaf) => new FeedView(leaf, this));
     this.addSettingTab(new ObsidianFeedSettingsTab(this.app, this));
     this.addRibbonIcon("rss", "Open Obsidian Feed", () => void this.openFeed());
@@ -55,6 +64,7 @@ export default class ObsidianFeedPlugin extends Plugin {
   async updateSettings(patch: Partial<PluginSettings>): Promise<void> {
     this.data.settings = { ...this.data.settings, ...patch };
     this.rebuildClient();
+    this.rebuildExporter();
     await this.saveData(this.data);
   }
 
@@ -85,6 +95,31 @@ export default class ObsidianFeedPlugin extends Plugin {
     });
   }
 
+  private rebuildExporter(): void {
+    const vault = new ObsidianVaultAdapter(this.app.vault);
+    const settings = this.data.settings;
+    const mediaLocalizer =
+      settings.imageSaveMode === "local"
+        ? new VaultMediaDownloader(vault, {
+            baseUrl: settings.serverBaseUrl,
+            token: settings.serverToken,
+            saveRoot: settings.saveRoot,
+            request: async (options) => {
+              const response = await requestUrl(options);
+              return {
+                status: response.status,
+                arrayBuffer: response.arrayBuffer,
+                headers: response.headers,
+              };
+            },
+          })
+        : undefined;
+    this.exporter = new ArticleExporter(vault, {
+      saveRoot: settings.saveRoot,
+      ...(mediaLocalizer ? { mediaLocalizer } : {}),
+    });
+  }
+
   private async openFeed(): Promise<void> {
     const existing = this.app.workspace.getLeavesOfType(FEED_VIEW_TYPE)[0];
     const leaf = existing ?? this.app.workspace.getLeaf(false);
@@ -98,13 +133,21 @@ export default class ObsidianFeedPlugin extends Plugin {
     if (view instanceof FeedView) await action(view);
   }
 
+  async appendExcerpt(articleId: string, selectedText: string): Promise<{ path: string }> {
+    try {
+      const file = await this.excerptController.appendExcerpt(articleId, selectedText);
+      new Notice(`摘录已保存到 ${file.path}`);
+      return file;
+    } catch (error) {
+      new Notice("摘录保存失败");
+      throw error;
+    }
+  }
+
   private async saveArticle(articleId: string): Promise<void> {
     try {
       const detail = await this.api.getArticle(articleId);
-      const exporter = new ArticleExporter(new ObsidianVaultAdapter(this.app.vault), {
-        saveRoot: this.data.settings.saveRoot,
-      });
-      const file = await exporter.save(detail);
+      const file = await this.exporter.save(detail);
       new Notice(`已保存到 ${file.path}`);
     } catch {
       new Notice("文章保存失败");

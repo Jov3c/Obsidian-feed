@@ -40,7 +40,11 @@ function listMarkdown(block: ListBlock, depth = 0): string {
 function blockMarkdown(block: ArticleBlock, imageUrl: (block: ImageBlock) => string): string {
   if (block.type === "paragraph") return runs(block.children);
   if (block.type === "heading") return `${"#".repeat(block.level)} ${runs(block.children)}`;
-  if (block.type === "image") return `![${escapeText(block.alt ?? "")}](${imageUrl(block)})`;
+  if (block.type === "image") {
+    const source = imageUrl(block);
+    const isWikiLink = source.startsWith("![[") && source.slice(-2) === "]]";
+    return isWikiLink ? source : `![${escapeText(block.alt ?? "")}](${source})`;
+  }
   if (block.type === "blockquote")
     return block.blocks
       .map((nested) => blockMarkdown(nested, imageUrl))

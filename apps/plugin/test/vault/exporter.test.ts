@@ -91,4 +91,47 @@ describe("ArticleExporter", () => {
     expect(file.path).toContain("-updated");
     expect(vault.files["Feed/RSS/Source/Title quoted.md"]).toContain("user content");
   });
+
+  it("creates a missing note and appends plain text to the excerpt section", async () => {
+    const vault = memoryVault();
+    const exporter = new ArticleExporter(vault, {
+      saveRoot: "Feed",
+      now: () => new Date(2026, 8, 9, 12, 34),
+    });
+
+    const file = await exporter.appendExcerpt(detail, "First line\nSecond line");
+
+    expect(vault.files[file.path]).toContain(
+      "> First line\n> Second line\n\n— 摘录于 2026-09-09 12:34",
+    );
+  });
+
+  it("appends to an existing note and suppresses an identical excerpt within five seconds", async () => {
+    let time = new Date(2026, 8, 9, 12, 34);
+    const vault = memoryVault();
+    const exporter = new ArticleExporter(vault, { saveRoot: "Feed", now: () => time });
+    const file = await exporter.save(detail);
+
+    await exporter.appendExcerpt(detail, "Chosen");
+    const once = vault.files[file.path];
+    time = new Date(2026, 8, 9, 12, 34, 4);
+    await exporter.appendExcerpt(detail, "Chosen");
+
+    expect(vault.files[file.path]).toBe(once);
+    expect(vault.files[file.path]?.match(/> Chosen/gu)).toHaveLength(1);
+  });
+
+  it("preserves a user-authored horizontal rule inside excerpts on later saves", async () => {
+    const vault = memoryVault();
+    const exporter = new ArticleExporter(vault, { saveRoot: "Feed" });
+    const file = await exporter.save(detail);
+    vault.files[file.path] = vault.files[file.path]!.replace(
+      "## 我的摘录\n\n",
+      "## 我的摘录\n\nBefore\n\n---\n\nAfter\n\n",
+    );
+
+    await exporter.save(detail);
+
+    expect(vault.files[file.path]).toContain("Before\n\n---\n\nAfter");
+  });
 });

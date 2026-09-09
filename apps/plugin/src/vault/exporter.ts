@@ -1,4 +1,5 @@
 import type { ApiArticleDetail } from "@obsidian-feed/contracts";
+import type { ArticleDocument } from "@obsidian-feed/content-model/types";
 
 import { yamlFrontmatter } from "./frontmatter.js";
 import { articleDocumentToMarkdown } from "./markdown.js";
@@ -25,10 +26,43 @@ function section(value: string, start: string, end: string): string | null {
   return value.slice(from + start.length, to);
 }
 
+function userRegions(
+  value: string,
+): { notes: string; excerpts: string; excerptDivider: number } | null {
+  const notesHeading = "## 我的笔记";
+  const excerptsHeading = "## 我的摘录";
+  const notesFrom = value.indexOf(notesHeading);
+  const excerptsFrom = value.indexOf(excerptsHeading, notesFrom + notesHeading.length);
+  const bodyFrom = value.indexOf(bodyStart, excerptsFrom + excerptsHeading.length);
+  const divider = value.lastIndexOf("\n---\n", bodyFrom);
+  const unique =
+    notesFrom >= 0 &&
+    excerptsFrom >= 0 &&
+    bodyFrom >= 0 &&
+    divider > excerptsFrom &&
+    value.indexOf(notesHeading, notesFrom + notesHeading.length) < 0 &&
+    value.indexOf(excerptsHeading, excerptsFrom + excerptsHeading.length) < 0 &&
+    value.indexOf(bodyStart, bodyFrom + bodyStart.length) < 0;
+  if (!unique) return null;
+  return {
+    notes: value.slice(notesFrom + notesHeading.length, excerptsFrom),
+    excerpts: value.slice(excerptsFrom + excerptsHeading.length, divider),
+    excerptDivider: divider,
+  };
+}
+
 export class ArticleExporter {
+  private readonly recentExcerpts = new Map<string, number>();
+
   constructor(
     private readonly vault: VaultAdapter,
-    private readonly options: { saveRoot: string; now?: () => Date },
+    private readonly options: {
+      saveRoot: string;
+      now?: () => Date;
+      mediaLocalizer?: {
+        localizeArticleImages(detail: ApiArticleDetail, notePath: string): Promise<ArticleDocument>;
+      };
+    },
   ) {}
 
   async save(detail: ApiArticleDetail): Promise<VaultFile> {
@@ -44,19 +78,21 @@ export class ArticleExporter {
     });
     const identified = await this.vault.findByArticleId(detail.article.id);
     let path = identified ?? desired;
-    const generated = this.generate(detail, now);
+    const document = this.options.mediaLocalizer
+      ? await this.options.mediaLocalizer.localizeArticleImages(detail, path)
+      : detail.document;
+    const generated = this.generate(detail, document, now);
     if (identified) {
       const existing = await this.vault.read(identified);
-      const notes = section(existing, "## 我的笔记", "## 我的摘录");
-      const excerpts = section(existing, "## 我的摘录", "\n---\n");
+      const regions = userRegions(existing);
       const validMarkers = section(existing, bodyStart, bodyEnd);
-      if (notes === null || excerpts === null || validMarkers === null) {
+      if (regions === null || validMarkers === null) {
         path = identified.replace(/\.md$/u, "-updated.md");
         return this.vault.create(path, generated);
       }
       const preserved = generated
-        .replace("## 我的笔记\n\n", `## 我的笔记${notes}`)
-        .replace("## 我的摘录\n\n", `## 我的摘录${excerpts}`);
+        .replace("## 我的笔记\n\n", `## 我的笔记${regions.notes}`)
+        .replace("## 我的摘录\n\n", `## 我的摘录${regions.excerpts}`);
       return this.vault.modify(path, preserved);
     }
     if (await this.vault.exists(path)) {
@@ -67,7 +103,34 @@ export class ArticleExporter {
     return this.vault.create(path, generated);
   }
 
-  private generate(detail: ApiArticleDetail, now: Date): string {
+  async appendExcerpt(detail: ApiArticleDetail, selectedText: string): Promise<VaultFile> {
+    const text = selectedText.replace(/\r\n?/gu, "\n").trim();
+    if (!text) throw new Error("No text selected");
+    const now = this.options.now?.() ?? new Date();
+    const duplicateKey = `${detail.article.id}\u0000${text}`;
+    const previous = this.recentExcerpts.get(duplicateKey);
+    const existingPath = await this.vault.findByArticleId(detail.article.id);
+    const file = existingPath ? { path: existingPath } : await this.save(detail);
+    if (previous !== undefined && now.getTime() - previous < 5_000) return file;
+
+    const existing = await this.vault.read(file.path);
+    const regions = userRegions(existing);
+    if (!regions) throw new Error("Excerpt section is ambiguous");
+    const quote = text
+      .split("\n")
+      .map((line) => `> ${line}`)
+      .join("\n");
+    const timestamp = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+    const insertion = `\n${quote}\n\n— 摘录于 ${timestamp}\n`;
+    await this.vault.modify(
+      file.path,
+      `${existing.slice(0, regions.excerptDivider)}${insertion}${existing.slice(regions.excerptDivider)}`,
+    );
+    this.recentExcerpts.set(duplicateKey, now.getTime());
+    return file;
+  }
+
+  private generate(detail: ApiArticleDetail, document: ArticleDocument, now: Date): string {
     const published = detail.article.publishedAt?.slice(0, 10);
     const frontmatter = yamlFrontmatter({
       type: "article",
@@ -79,7 +142,7 @@ export class ArticleExporter {
       original_url: detail.article.canonicalUrl,
       obsidian_feed_article_id: detail.article.id,
     });
-    const body = articleDocumentToMarkdown(detail.document!, { imageUrl: (image) => image.src });
+    const body = articleDocumentToMarkdown(document, { imageUrl: (image) => image.src });
     return `${frontmatter}\n\n# ${detail.article.title}\n\n> 来源：[${detail.source.name}](${detail.article.canonicalUrl})\n\n## 我的笔记\n\n\n## 我的摘录\n\n\n---\n\n${bodyStart}\n## 正文\n\n${body}${bodyEnd}\n`;
   }
 }
