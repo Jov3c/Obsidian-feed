@@ -8,7 +8,9 @@ export class ToolbarController {
     else if (delta > 24) this.toolbar.classList.add("is-hidden");
     this.previous = current;
     const maximum = Math.max(1, this.container.scrollHeight - this.container.clientHeight);
-    this.progress.style.transform = `scaleX(${Math.min(1, current / maximum)})`;
+    const ratio = Math.min(1, current / maximum);
+    this.progress.style.transform = `scaleX(${ratio})`;
+    this.progress.setAttribute("aria-valuenow", String(Math.round(ratio * 100)));
     this.progress.classList.add("is-visible");
     if (this.idle) clearTimeout(this.idle);
     this.idle = setTimeout(() => this.progress.classList.remove("is-visible"), 1_200);

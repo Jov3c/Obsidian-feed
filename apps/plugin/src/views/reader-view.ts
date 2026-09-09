@@ -34,6 +34,13 @@ export class ReaderViewController {
       container.replaceChildren();
       const toolbar = element(document, "div", "of-reader-toolbar");
       const progress = element(document, "div", "of-reader-progress");
+      toolbar.setAttribute("role", "toolbar");
+      toolbar.setAttribute("aria-label", "阅读操作");
+      progress.setAttribute("role", "progressbar");
+      progress.setAttribute("aria-label", "阅读进度");
+      progress.setAttribute("aria-valuemin", "0");
+      progress.setAttribute("aria-valuemax", "100");
+      progress.setAttribute("aria-valuenow", "0");
       toolbar.append(actionButton(document, "返回", onBack));
       const original = element(document, "a", "of-action", "打开原文");
       original.href = detail.article.canonicalUrl;

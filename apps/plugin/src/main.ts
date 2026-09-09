@@ -65,6 +65,9 @@ export default class ObsidianFeedPlugin extends Plugin {
     this.data.settings = { ...this.data.settings, ...patch };
     this.rebuildClient();
     this.rebuildExporter();
+    for (const leaf of this.app.workspace.getLeavesOfType(FEED_VIEW_TYPE)) {
+      if (leaf.view instanceof FeedView) leaf.view.applyPreferences();
+    }
     await this.saveData(this.data);
   }
 

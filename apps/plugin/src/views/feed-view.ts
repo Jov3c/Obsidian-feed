@@ -2,6 +2,7 @@ import { ItemView, Notice, type WorkspaceLeaf } from "obsidian";
 
 import type ObsidianFeedPlugin from "../main.js";
 import { AddSubscriptionModal } from "./add-subscription-modal.js";
+import { applyReaderPreferences } from "./appearance.js";
 import { actionButton, element } from "./dom.js";
 import { renderSubscriptions } from "./subscriptions-view.js";
 import { renderToday, TodayController } from "./today-view.js";
@@ -82,6 +83,7 @@ export class FeedView extends ItemView {
   }
 
   private async loadSubscriptions(): Promise<void> {
+    this.prepareRoot();
     this.contentEl.replaceChildren(element(document, "p", "of-state", "正在加载订阅…"));
     try {
       const subscriptions = await this.plugin.api.listSubscriptions();
@@ -104,7 +106,7 @@ export class FeedView extends ItemView {
 
   private render(): void {
     this.contentEl.empty();
-    this.contentEl.addClass("of-root");
+    this.prepareRoot();
     if (this.route.name === "today") {
       renderToday(this.contentEl, this.today.state, {
         reading: this.plugin.data.reading,
@@ -134,5 +136,14 @@ export class FeedView extends ItemView {
       actionButton(document, "订阅", () => void this.showSubscriptions()),
     );
     this.contentEl.prepend(navigation);
+  }
+
+  applyPreferences(): void {
+    applyReaderPreferences(this.contentEl, this.plugin.data.settings);
+  }
+
+  private prepareRoot(): void {
+    this.contentEl.addClass("of-root");
+    this.applyPreferences();
   }
 }
